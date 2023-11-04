@@ -12,7 +12,7 @@
 #define OUTPUT_GIVEN (1 << 0) // An output file is given
 #define INPUT_GIVEN (1 << 1) // An input file is given
 #define STEP_BY_STEP (1 << 2) // Execute step by step
-#define PRINT_IMAGE_INFO (1 << 3) // Print image information
+#define DISPLAY (1 << 3) // Print image information or display sudoku solution in an image
 #define PRINT_TIME (1<<5) // Print execution time of the program
 #define CANNY_MODE (1<<6) // Run canny filter
 #define SOLVER_MODE (1<<7) // Run solver
@@ -26,7 +26,7 @@
 char* images_dir_path = "images_test"; // Where images ar
 char* grid_dir_path = "grids"; // Where grids are
 char* input_filename = ""; // If an input is given its here
-char* output_filename = "res/image.bmp"; // Same
+char* output_filename = "output/image.bmp"; // Same
 
 int blur_straight = 1; // Straightness of Gaussian blur
 float low_threshold = 50.0; // Low threshold for canny filter
@@ -525,7 +525,7 @@ int ParseArguments(int argc, char** argv)
             // Simple flags
             while (argv[i][j] != '\0'){
                 if (argv[i][j] == 'd')
-                    flags |= PRINT_IMAGE_INFO;
+                    flags |= DISPLAY;
                 else if (argv[i][j] == 's')
                     flags |= STEP_BY_STEP;
                 else if (argv[i][j] == 't')
@@ -574,7 +574,7 @@ int InitSdlAndLoadImage(SDL_Surface **image, SDL_Surface **image32, SDL_Renderer
     }
 
     // Display image infos
-    if (flags & PRINT_IMAGE_INFO)
+    if (flags & DISPLAY)
         PrintImageInformation(*image);
 
     // 32 bits conversion
@@ -596,7 +596,7 @@ int InitSdlAndLoadImage(SDL_Surface **image, SDL_Surface **image32, SDL_Renderer
         *image32 = ResizeSurface(*image32, DM.w, DM.h - 200);
 
     // Display image infos
-    if (flags & PRINT_IMAGE_INFO)
+    if (flags & DISPLAY)
         PrintImageInformation(*image32);
 
     // Creating window
@@ -657,7 +657,7 @@ int MainSolver() {
         input_filename = FileUserChoice(grid_dir_path);
     }
 
-    return Solver(input_filename); // Exit the program with a success code (0).
+    return Solver(input_filename, (int)(flags & DISPLAY)); // Exit the program with a success code (0).
 }
 
 /*Execute Xor neural network learning*/
@@ -776,10 +776,10 @@ int main(int argc, char** argv){
         DisplayHelp(argv);
 
     else if (flags & GRID_MODE)
-        MainGridDetection();
+        status = MainGridDetection();
 
     else if (flags & ROTATE_MODE)
-        MainRotate();
+        status = MainRotate();
 
     if (status == 0){
         // Ending time

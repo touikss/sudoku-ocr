@@ -1,6 +1,16 @@
+
+#include "../headers/solver.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
+// Dimention of window
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 640;
+
+// Dimension of the grid
+const int GRID_SIZE = 9;
+const int CELL_SIZE = SCREEN_WIDTH / GRID_SIZE;
 
 // This function transforms the given sudoku file into an int matrix
 int** read_sudoku_from_file(const char* filename) {
@@ -155,15 +165,139 @@ int solve_sudoku(int** grid, int row, int col) {
     return 0; // If no valid solution is found, return 0.
 }
 
+// This function display the grid in an image
+void displaySudoku(SDL_Renderer* renderer, int grid[GRID_SIZE][GRID_SIZE], TTF_Font* font) {
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Couleur de fond blanche
+    SDL_RenderClear(renderer);
+
+    int count = 0;
+    // Draw the grid
+    for (int i = 0; i <= GRID_SIZE; ++i) {
+        int x = i * CELL_SIZE;
+        int y = i * CELL_SIZE;
+
+        if(count == 3){  //Change the thickness if the line is one of the big square that contains 9 squares
+            SDL_Rect horizonLine = {0, y, SCREEN_WIDTH, 4};
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderFillRect(renderer, &horizonLine);
+
+            SDL_Rect vertLine = {x, 0, 4, SCREEN_HEIGHT};
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderFillRect(renderer, &vertLine);
+            count = 0;
+        }
+
+        else{
+            SDL_Rect horizonLine = {0, y, SCREEN_WIDTH, 2};
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderFillRect(renderer, &horizonLine);
+
+            SDL_Rect vertLine = {x, 0, 2, SCREEN_HEIGHT};
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderFillRect(renderer, &vertLine);
+        }
+
+        count++;
+    }
+
+    // Draw the digits in the cases
+    for (int row = 0; row < GRID_SIZE; ++row) {
+        for (int col = 0; col < GRID_SIZE; ++col) {
+            int number = grid[row][col];
+            if (number != 0) {
+                // Place the text in the middle of the case
+                int textX = col * CELL_SIZE + CELL_SIZE / 4;
+                int textY = row * CELL_SIZE + CELL_SIZE / 4;
+
+                // Create SDL renderer with the digit
+                char text[2];
+                snprintf(text, 2, "%d", number);
+
+                SDL_Color textColor = {0, 0, 0, 255};
+                SDL_Surface* textSurface = TTF_RenderText_Solid(font, text, textColor);
+                SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+
+                // Draw the text
+                SDL_Rect destRect = { textX, textY, CELL_SIZE / 2, CELL_SIZE / 2 };
+                SDL_RenderCopy(renderer, textTexture, NULL, &destRect);
+
+                // Free memory
+                SDL_FreeSurface(textSurface);
+                SDL_DestroyTexture(textTexture);
+            }
+        }
+    }
+
+    SDL_RenderPresent(renderer);
+}
+
+
 
 // Main function that serves as the entry point of the Sudoku solver program.
-int Solver(char* file_name) {
+int Solver(char* file_name, int display) {
 
     // Read the Sudoku grid from the specified file and store it in a matrix.
     int** sudoku = read_sudoku_from_file(file_name);
 
-    // Attempt to solve the Sudoku puzzle starting from the top-left corner (0, 0).
-    if (solve_sudoku(sudoku, 0, 0) == 1){
+
+    if(solve_sudoku(sudoku, 0, 0) == 1 && display){
+
+        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+            fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
+            return 1;
+        }
+
+        if (TTF_Init() != 0) {
+            fprintf(stderr, "TTF_Init failed: %s\n", TTF_GetError());
+            SDL_Quit();
+            return 1;
+        }
+
+        SDL_Window* window = SDL_CreateWindow("Sudoku Solver", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+        SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+        // Charger la police pour afficher les chiffres
+        TTF_Font* font = TTF_OpenFont("res/font.ttf", 24);
+
+        if (font == NULL) {
+            fprintf(stderr, "TTF_OpenFont failed: %s\n", TTF_GetError());
+            TTF_Quit();
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(window);
+            SDL_Quit();
+            return 1;
+        }
+
+        int sudokuGrid[GRID_SIZE][GRID_SIZE];
+
+        // Initialisation de la grille de Sudoku
+        for (int row = 0; row < GRID_SIZE; ++row) {
+            for (int col = 0; col < GRID_SIZE; ++col) {
+                sudokuGrid[row][col] = sudoku[row][col]; // Vous pouvez mettre les chiffres initiau
+            }
+        }
+
+        int quit = 0;
+        SDL_Event event;
+
+        while (!quit) {
+            while (SDL_PollEvent(&event) != 0) {
+                if (event.type == SDL_QUIT) {
+                    quit = 1;
+                }
+            }
+
+            displaySudoku(renderer, sudokuGrid, font);
+        }
+
+        TTF_CloseFont(font);
+        TTF_Quit();
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+    }
+        // Attempt to solve the Sudoku puzzle starting from the top-left corner (0, 0).
+    else if (solve_sudoku(sudoku, 0, 0) == 1){
         print_grid(sudoku); // If a solution is found, print the solved grid.
     }
 
@@ -177,6 +311,6 @@ int Solver(char* file_name) {
     }
     free(sudoku);
 
-    return EXIT_SUCCESS; // Exit the program with a success code (0).
+    return 0; // Exit the program with a success code (0).
 }
 

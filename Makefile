@@ -1,27 +1,26 @@
-# Nom de l'exécutable
+# Exe name
 EXECUTABLE = main
 
-# Compilateur
 CC = gcc
 
-# Options de compilation
+# Compilation options
 CFLAGS = -Wall -Wextra -std=c99 -g -D_GNU_SOURCE
 
-# Bibliothèques
-LIBS = -lSDL2 -lSDL2_image -lm
+# Libs
+LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lm
 
-# Répertoires
+# Directories
 SRC_DIR = sources
 HDR_DIR = headers
 GRID_DIR = grids
 
-# Fichiers source
+# Source files
 SOURCES = $(wildcard $(SRC_DIR)/*.c)
 
-# Fichiers objets
+# Object file
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.c=%.o)
 
-# Cible par défaut
+# Default target
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)

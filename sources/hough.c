@@ -478,7 +478,7 @@ void SaveEachCase(PointArray* points, SDL_Surface* image, SDL_Renderer* renderer
             int height = abs(points->data[current].y - points->data[bottom].y);
             // Create file name
             char buffer[26];
-            snprintf(buffer, sizeof(buffer), "res/case_%d%d.png", case_count/9, case_count%9);
+            snprintf(buffer, sizeof(buffer), "output/case_%d%d.png", case_count/9, case_count%9);
             printf("Case saved : %d, %d\n", case_count/9, case_count%9);
             // Save the case
             SaveSurfaceSample(image, points->data[current].x + 15,points->data[current].y + 10, width - 35, height - 20, buffer);
@@ -670,7 +670,9 @@ SDL_Surface* ApplyHoughTransform(SDL_Surface* original_image, SDL_Surface* image
                     "Because we don't want your computer to burn, we disabled this function.\n"
                     "You can run Hough only with step option (-s)\n"
                     "Example: ./main grid -s or ./main hough -s\n");
-    return NULL;
+
+    if (original_image != NULL)
+        return NULL;
 
     DeleteBord(image_from_canny); // Delete border to increase precision
 
