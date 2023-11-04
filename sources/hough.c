@@ -477,7 +477,7 @@ void SaveEachCase(PointArray* points, SDL_Surface* image, SDL_Renderer* renderer
             int width = abs(points->data[current].x - points->data[right].x);
             int height = abs(points->data[current].y - points->data[bottom].y);
             // Create file name
-            char buffer[26];
+            char buffer[29];
             snprintf(buffer, sizeof(buffer), "output/case_%d%d.png", case_count/9, case_count%9);
             printf("Case saved : %d, %d\n", case_count/9, case_count%9);
             // Save the case
