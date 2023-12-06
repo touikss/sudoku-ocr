@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 int rho_margin_clean = 40;
-int theta_margin_clean = 40;
+int theta_margin_clean = 20;
 
 // Initialize PointArray
 void InitializeSDLPointArray(PointArray* arr, size_t initial_capacity) {
@@ -35,7 +35,7 @@ void AddPoint(PointArray* arr, SDL_Point point) {
 void AddPolarLine(PolarLineArray* arr, PolarLine line) {
     if (arr->size == arr->capacity) {
         // If size is reached increase capacity
-        arr->capacity *= 2;
+        arr->capacity = arr->capacity == 0? 2 : arr->capacity * 2;
         arr->data = (PolarLine*)realloc(arr->data, arr->capacity * sizeof(PolarLine));
     }
     arr->data[arr->size++] = line;
@@ -89,10 +89,9 @@ SDL_Surface* ConvertHoughSpaceToSurface(int n_theta, int n_rho, int polar_tab[n_
             int val = polar_tab[x][y];
             if (val > 255)
                 val = 255;
-            SetPixelRGBA(hough_space, x, y, val, val, val, val);
+            SetPixelRGBA(hough_space, x, y, val, val, val, 255);
         }
     }
-
     return hough_space;
 }
 
@@ -118,6 +117,7 @@ void DrawThickPoint(SDL_Renderer* renderer, int x, int y, int thickness, Uint8 r
     }
 }
 
+/*
 // From a canny surface, compute equivalent in a hough space (polar coordinates)
 // Stores it in an accumulator
 void ConvertSurfaceToLineAccumulator(SDL_Surface* image_from_canny, int n_theta, int n_rho, int accum[n_theta][n_rho], double d_theta, double d_rho, int n_y, int n_x)
@@ -135,7 +135,27 @@ void ConvertSurfaceToLineAccumulator(SDL_Surface* image_from_canny, int n_theta,
                 }
         }
     }
+}*/
+
+void ConvertSurfaceToLineAccumulator(SDL_Surface* image_from_canny, int n_theta, int n_rho, int (*accum)[n_rho], double d_theta, double d_rho, int n_y, int n_x)
+{
+    for (int j = 0; j < n_y; j++) {
+        for (int i = 0; i < n_x; i++) {
+            // Check if pixel is white
+            if (GetPixelLuminance(image_from_canny, i, j) > 0) {
+                for (int i_theta = 0; i_theta < n_theta; i_theta++) {
+                    double theta = i_theta * d_theta;
+                    double rho = i * cos(theta) + (n_y - j) * sin(theta);
+                    int i_rho = (int)(rho / d_rho);
+                    if (i_rho > 0 && i_rho < n_rho) {
+                        (*accum)[i_theta * n_rho + i_rho] += 1;
+                    }
+                }
+            }
+        }
+    }
 }
+
 
 // Keep only values higher than e thershold in the accumulator
 void ApplyThresholdToAccumulator(int threshold, int *nb_lines, int n_theta, int n_rho, int accum[n_theta][n_rho])
@@ -154,6 +174,7 @@ void ApplyThresholdToAccumulator(int threshold, int *nb_lines, int n_theta, int 
 // Keep only one point when there are many in the same place
 void KeepOnlyOnePointFromGroups(int *nb_lines, int n_theta, int n_rho, int accum[n_theta][n_rho], double rho_margin, double theta_margin)
 {
+    nb_lines ++;
     // Run through accumulator
     for (int x = 0; x < n_theta; x ++){
         for (int y = 0; y < n_rho; y++) {
@@ -161,37 +182,34 @@ void KeepOnlyOnePointFromGroups(int *nb_lines, int n_theta, int n_rho, int accum
                 int rho_average = 0;
                 int theta_average = 0;
                 int count = 0;
-                for (int y_tmp = y; y_tmp < y + theta_margin; y_tmp += 1) {    // Compute average in pixels around
-                    for (int x_tmp = x; x_tmp < x + rho_margin; x_tmp += 1) {
-                        if (x_tmp < n_theta && y_tmp < n_rho && accum[x_tmp][y_tmp] != 0){
-                            rho_average += x_tmp;
-                            theta_average += y_tmp;
-                            count ++;
+                int max_value = 0;
+
+                for (int x_tmp = x; x_tmp < x + theta_margin && x_tmp < n_theta; x_tmp += 1) {    // Compute average in pixels around
+                    for (int y_tmp = y; y_tmp < y + rho_margin && y_tmp < n_rho; y_tmp += 1) {
+                        if (accum[x_tmp][y_tmp] != 0){
+                            rho_average += y_tmp * accum[x_tmp][y_tmp];
+                            theta_average += x_tmp * accum[x_tmp][y_tmp];
+                            count += accum[x_tmp][y_tmp];
+                            if (accum[x_tmp][y_tmp] > max_value)
+                                max_value = accum[x_tmp][y_tmp];
+                            accum[x_tmp][y_tmp] = 0;
                         }
                     }
                 }
                 rho_average /= count;
                 theta_average /= count;
-                // Set to 0 every pixels around
-                for (int y_tmp = y; y_tmp < y + theta_margin; y_tmp += 1) {
-                    for (int x_tmp = x; x_tmp < x + rho_margin; x_tmp += 1) {
-                        if (x_tmp < n_theta && y_tmp < n_rho && accum[x_tmp][y_tmp] != 0){
-                            accum[x_tmp][y_tmp] = 0;
-                            *nb_lines -= 1;
-                        }
-                    }
-                }
                 // Only keep the one which is at average coordinates
-                accum[rho_average][theta_average] = 255;
+                accum[theta_average][rho_average] = 255;
+                //printf("MAX VAUE: %d\n", max_value);
             }
         }
     }
 }
 
+
 // From accumulator, deduce polar line
 void ComputePolarLineCoordinates(PolarLineArray* lines, int n_theta, int n_rho, int accum[n_theta][n_rho], double d_theta, double d_rho)
 {
-    int i_line = 0;
     for (int i_theta = 0; i_theta < n_theta; i_theta ++){
         for (int i_rho = 0; i_rho < n_rho; ++i_rho) {
             if (accum[i_theta][i_rho] != 0){
@@ -199,7 +217,6 @@ void ComputePolarLineCoordinates(PolarLineArray* lines, int n_theta, int n_rho, 
                 tmp_polar.theta = i_theta*d_theta;
                 tmp_polar.rho = i_rho*d_rho;
                 AddPolarLine(lines, (PolarLine){tmp_polar.rho, tmp_polar.theta});
-                i_line ++;
             }
         }
     }
@@ -217,10 +234,10 @@ int DrawLinesOnRenderer(SDL_Renderer* renderer, PolarLineArray lines, int n_y)
         double b = sin(theta);
         double x0 = a*rho;
         double y0 = b*rho;
-        int x1 = (int)(x0 + 9000*(-b)); //*1000 is to be sure that the line will not end in the screen
-        int y1 = n_y - (int)(y0 + 9000*(a));
-        int x2 = (int)(x0 - 9000*(-b));
-        int y2 = n_y - (int)(y0 - 9000*(a));
+        int x1 = (int)(x0 + 1000*(-b)); //*1000 is to be sure that the line will not end in the screen
+        int y1 = n_y - (int)(y0 + 1000*(a));
+        int x2 = (int)(x0 - 1000*(-b));
+        int y2 = n_y - (int)(y0 - 1000*(a));
         // Draw the line
         if (SDL_RenderDrawLine(renderer, x1, y1, x2, y2) != 0)
             return EXIT_FAILURE;
@@ -241,7 +258,6 @@ void ComputeIntersectionPointsBetweenTwoLines(PolarLine polar_1, PolarLine polar
         (*intersection).x = -1;
         (*intersection).y = -1;
     }
-
 }
 
 // Compute every intersection points between every line and keep the ones which ar in the screen
@@ -477,7 +493,7 @@ void SaveEachCase(PointArray* points, SDL_Surface* image, SDL_Renderer* renderer
             int width = abs(points->data[current].x - points->data[right].x);
             int height = abs(points->data[current].y - points->data[bottom].y);
             // Create file name
-            char buffer[29];
+            char buffer[26];
             snprintf(buffer, sizeof(buffer), "output/case_%d%d.png", case_count/9, case_count%9);
             printf("Case saved : %d, %d\n", case_count/9, case_count%9);
             // Save the case
@@ -589,14 +605,14 @@ SDL_Surface* ApplyHouhgTransformByStep(SDL_Surface* original_image, SDL_Surface*
     CleanSortedLineTooClose(&lines);
 
     // 100 lines remaining means that there is an error... or it is not a grid
-    if (nb_lines > 100){
+   /* if (nb_lines > 100){
         fprintf(stderr, "Too many lines found with Hough transform, change parameters and try again\n");
         goto Quit;
     }
     else if (lines.size < 10){
         fprintf(stderr, "Too few lines found with Hough transform, change parameters and try again\n");
         goto Quit;
-    }
+    }*/
     if (step == 5) {
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -663,96 +679,300 @@ Quit:
     return res;
 }
 
+int testIfBlanc(SDL_Surface* img, int x, int y, int length, int angle, SDL_Renderer* renderer) {
+    // Convertissez l'angle en radians
+    double angleRad = angle * M_PI / 180.0;
+    SDL_RenderPresent(renderer);
+
+    // Calculez les coordonnées du vecteur direction
+    double dx = cos(angleRad);
+    double dy = sin(angleRad);
+
+    // Utilisez l'algorithme de Bresenham pour parcourir la droite
+    int countBlanc = 0;
+
+    int currentX = x;
+    int currentY = y;
+
+    for (int i = 0; i <= length; ++i) {
+        // Vérifiez si les coordonnées sont à l'intérieur de l'image
+        if (currentX >= 0 && currentX < img->w && currentY >= 0 && currentY < img->h) {
+        
+            // Vérifiez si le pixel est blanc (la valeur dépend du format de surface)
+            if (GetPixelLuminance(img, currentX, currentY) != 0) {
+                countBlanc++;
+            }
+        }
+        // Déplacez-vous le long de la droite
+        currentX = x + i * dx;
+        currentY = y + i * dy;
+    }
+
+    return countBlanc;
+}
+
+
+int count_accum(int x_max, int y_max, int accum[x_max][y_max]){
+    int count = 0;
+    for (int j = 0; j < x_max; j ++){
+        for (int i = 0; i < y_max; i ++){
+            if (accum[j][i] != 0)
+                count ++;
+        }
+    }
+    return count;
+}
+
+void display_accum(SDL_Renderer* renderer, SDL_Surface* img){
+    
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, img);
+    
+    if (texture == NULL) {
+        printf("Texture creation error : %s\n", SDL_GetError());
+        return;
+    }
+
+    //SDL_RenderCopy(renderer, texture, NULL, NULL);
+    
+    /*SDL_Surface* screenshot = SDL_CreateRGBSurface(0, img->w, img->h, 32, 0, 0, 0, 0);
+    if (SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, screenshot->pixels, screenshot->pitch) != 0) {
+        SDL_Log("Error while capturing screen%s", SDL_GetError());
+        return NULL;
+    }*/
+
+    double scale = 1.0;
+    int desiredWidth = img->w;
+    int desiredHeight = img->h;
+    if ((img)->w > desiredWidth) scale = (double)desiredWidth / (img)->w;
+    if ((img)->h * scale > desiredHeight) scale = (double)desiredHeight / (img)->h;
+    int scaledWidth = (img)->w * scale;
+    int scaledHeight = (img)->h * scale;
+    SDL_Rect destRect = {0, 0, scaledWidth, scaledHeight};
+    SDL_RenderCopy(renderer, texture, NULL, &destRect);
+
+    SDL_RenderPresent(renderer);
+}
+
 // Same function as above but we do this in a single
 SDL_Surface* ApplyHoughTransform(SDL_Surface* original_image, SDL_Surface* image_from_canny, SDL_Renderer* renderer, int threshold)
 {
-    fprintf(stderr, "Sorry, a last minute bug occured...\n"
-                    "Because we don't want your computer to burn, we disabled this function.\n"
-                    "You can run Hough only with step option (-s)\n"
-                    "Example: ./main grid -s or ./main hough -s\n");
-
-    if (original_image != NULL)
-        return NULL;
-
     DeleteBord(image_from_canny); // Delete border to increase precision
-
+    SDL_Surface * res = NULL;
+    // Initialize variable that we will use to pass in polar coordinates
     int n_y = image_from_canny->h;
     int n_x = image_from_canny->w;
-
     double rho = 1.0;
     double theta = 1.0;
-
     int n_theta = (int)(180.0/theta);
     int n_rho = (int)(floor(sqrt(n_x*n_x+n_y*n_y))/rho);
     double d_theta = M_PI/n_theta;
     double d_rho = floor(sqrt(n_x*n_x+n_y*n_y))/n_rho;
-
     int accum[n_theta][n_rho]; // Accumulator (Houhg space)
-
+    int nb_lines = 0;
     // Initialize all element to 0
     for (int i = 0; i < n_theta; i++) {
         for (int j = 0; j < n_rho; j++) {
             accum[i][j] = 0;
         }
     }
-
-    SDL_Surface* res = NULL;
-
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, original_image);
-    if (texture == NULL) {
-        printf("Texture creation error : %s\n", SDL_GetError());
-        goto Quit;
-    }
-    SDL_RenderCopy(renderer, texture, NULL, NULL);
-
+    PointArray points; // Points array
+    InitializeSDLPointArray(&points, 1);
+    PolarLineArray lines; // Dynamic line array
+    InitializePolarLineArray(&lines, 100);
     // Compute curves
     ConvertSurfaceToLineAccumulator(image_from_canny, n_theta, n_rho, accum, d_theta, d_rho, n_y, n_x);
-
-    int nb_lines = 0;
-    ApplyThresholdToAccumulator(threshold, &nb_lines, n_theta, n_rho, accum);
-
-    // Clean lines
+    ApplyThresholdToAccumulator(threshold, &nb_lines, n_theta, n_rho, accum); // Apply threshold
     KeepOnlyOnePointFromGroups(&nb_lines, n_theta, n_rho, accum, rho_margin_clean, theta_margin_clean);
-
-    // Lines
-    PolarLineArray lines; // Dynamic line array
-    InitializePolarLineArray(&lines, nb_lines);
     ComputePolarLineCoordinates(&lines, n_theta, n_rho, accum, d_theta, d_rho);
+    /*
+    if (count_accum(n_theta, n_rho, accum) != 20) {
+        int past_threshold = threshold;
+        for (int i = 0; i < 200; ++i) {
+            int tmp = threshold;
+            printf("ITER : %d, NB LINES : %d, THRESHOLD = %d\n", i, count_accum(n_theta, n_rho, accum), threshold);
+            if (count_accum(n_theta, n_rho, accum) < 20) {
+                printf("INFÉRIEUR : ");
+                if (past_threshold <= threshold)
+                    threshold -= 20;
+                else
+                    threshold -= (past_threshold - threshold) / 2;
+            } else if (count_accum(n_theta, n_rho, accum) > 20) {
+                printf("SUPÉRIEUR : ");
+                if (past_threshold >= threshold)
+                    threshold += threshold / 6;
+                else
+                    threshold += (threshold - past_threshold) / 2;
+            } else continue;
+            printf("\n");
+            past_threshold = tmp;
+            // Compute curves
+            for (size_t j = 0; j < lines.size; j++) {
+                RemoveLineAtIndex(&lines, j);
+            }
+
+            for (int j = 0; j < n_theta; j ++){
+                for (int i = 0; i < n_rho; i ++){
+                    accum[j][i] = 0;
+                }
+            }
+            //FreePolarLineArray(&lines);
+
+            ConvertSurfaceToLineAccumulator(image_from_canny, n_theta, n_rho, accum, d_theta, d_rho, n_y, n_x);
+            ApplyThresholdToAccumulator(threshold, &nb_lines, n_theta, n_rho, accum); // Apply threshold
+            // Clean lines
+            KeepOnlyOnePointFromGroups(&nb_lines, n_theta, n_rho, accum, rho_margin_clean, theta_margin_clean);
+            // Compute polar coordinates from accumulator
+            //ComputePolarLineCoordinates(&lines, n_theta, n_rho, accum, d_theta, d_rho);
+            printf("ITER : %d, NB LINES : %d, THRESHOLD = %d\n", i, count_accum(n_theta, n_rho, accum), threshold);
+
+
+            // DISPLAY
+
+            for (size_t j = 0; j < lines.size; ++j) {
+                RemoveLineAtIndex(&lines, j);
+            }
+
+            ComputePolarLineCoordinates(&lines, n_theta, n_rho, accum, d_theta, d_rho);
+
+            SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, original_image);
+            if (texture == NULL) {
+                printf("Texture creation error : %s\n", SDL_GetError());
+                return NULL;
+            }
+            SDL_RenderCopy(renderer, texture, NULL, NULL);
+            DrawLinesOnRenderer(renderer, lines, n_y);
+            //DrawAllPoints(points, renderer);
+            SDL_Surface *screenshot = SDL_CreateRGBSurface(0, original_image->w, original_image->h, 32, 0, 0, 0, 0);
+            if (SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, screenshot->pixels, screenshot->pitch) != 0) {
+                SDL_Log("Error while capturing screen%s", SDL_GetError());
+                return NULL;
+            }
+            SDL_RenderPresent(renderer);
+
+
+            res = ConvertHoughSpaceToSurface(n_theta, n_rho, accum);
+
+            display_accum(renderer, res);
+        }
+    
+
+        if (count_accum(n_theta, n_rho, accum) > 20) {
+            fprintf(stderr, "Too many lines found with Hough transform, change parameters and try again\n");
+            return NULL;
+        } else if (count_accum(n_theta, n_rho, accum) < 20) {
+            fprintf(stderr, "Too few lines found with Hough transform, change parameters and try again\n");
+            return NULL;
+        }
+    }*/
 
     // Sort lines
     SortPolarLineByTheta(&lines);
     // And clean it
     CleanSortedLineTooClose(&lines);
 
-    // 100 lines remaining means that there is an error... or it is not a grid
-    if (nb_lines < 100){
-        DrawLinesOnRenderer(renderer, lines, n_y);
-    }
-    else{
-        printf("Too many lines, change parameters \n");
-        goto Quit;
-    }
-
-
-    PointArray points; // Points array
-    InitializeSDLPointArray(&points, nb_lines*nb_lines);
-
-    // Compute points value
     ComputeAllIntersectionPoints(lines, n_y, n_x, &points);
-    // Clean it
-    RemoveTwinPoints(&points); // Normally not required, but if there are twins, it will sabotage the rest of the program
+    RemoveTwinPoints(&points);
 
-    SaveEachCase(&points, original_image, renderer, 0);
-    SDL_Surface *screenshot = SDL_CreateRGBSurface(0, image_from_canny->w, image_from_canny->h, 32, 0, 0, 0, 0);
+    DrawLinesOnRenderer(renderer, lines, n_y);
+    DrawAllPoints(points, renderer);
+
+    SDL_RenderPresent(renderer);
+
+    sleep(5);
+
+    //res = ConvertHoughSpaceToSurface(n_theta, n_rho, accum);
+
+    printf("POINTS : %zu\n", points.size);
+
+    /*for (size_t i = 0; i < points.size; i++)
+    {
+        printf("Point %d : (%d,%d)\n", i, points.data[i].x, points.data[i].y);
+    }*/
+
+    for (size_t i = 0; i < points.size; i++)
+    {
+        int x = points.data[i].x;
+        int y = points.data[i].y;
+
+        //if (GetPixelLuminance(image_from_canny, x, y) != 0){
+            int count = 0;
+            for (int k = x - 5 < 0 ? 0 : - 5; k < (x + 5 >= n_x? n_x - x : 5); k++)
+            {
+                for (int l = y - 5 < 0 ? 0 : -5; l < (y + 5 >= n_y ? n_y - y : 5); l++)
+                {
+                    int x_t = x + k;
+                    int y_t = y + l;
+                    int angle1 = -1;
+                    int angle2 = -1;
+                    int angle3 = -1;
+                    for (size_t angle = 0; angle < 360; angle+= 1)
+                    {
+                        int current = testIfBlanc(image_from_canny, x_t, y_t, 50, angle, renderer);
+                        if (current > 5){
+                            if (angle1 == -1)
+                                angle1 = angle;
+                            else if (angle2 == -1){
+                                angle2 = angle;
+                            }
+                            else if (angle3 == -1){
+                                angle3 = angle;
+                                break;
+                            }
+                            angle += 70;
+                            count ++;
+                        }
+                    }
+                    if (angle3 == -1 && angle1 != -1 && angle2 != -1 && abs(angle1 - angle2) < 120){
+                        DrawThickPoint(renderer, x_t, y_t, 10, 0, 255, 0);
+                        printf("MAX = %d\n", count);
+                    }
+                }
+            }
+        //}   
+    }
+    
+    SDL_RenderPresent(renderer);
+
+    sleep(3);
+
+    //SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    //SDL_RenderClear(renderer);
+    
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, original_image);
+    
+    if (texture == NULL) {
+        printf("Texture creation error : %s\n", SDL_GetError());
+        return NULL;
+    }
+
+    printf("HOPE2\n");
+
+
+    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    DrawLinesOnRenderer(renderer, lines, n_y);
+    DrawAllPoints(points, renderer);
+
+    SDL_Surface *screenshot = SDL_CreateRGBSurface(0, original_image->w, original_image->h, 32, 0, 0, 0, 0);
     if (SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, screenshot->pixels, screenshot->pitch) != 0) {
         SDL_Log("Error while capturing screen%s", SDL_GetError());
-        goto Quit;
+        return NULL;
     }
+    SDL_RenderPresent(renderer);
+
     res = screenshot;
 
-    Quit:
-    FreePolarLineArray(&lines); // Free point array
-    FreePointArray(&points); // Free line array
+    sleep(1);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    res = ConvertHoughSpaceToSurface(n_theta, n_rho, accum);
+
+    sleep(2);
+
+
+    FreePolarLineArray(&lines);
+    FreePointArray(&points);
 
     return res;
 }

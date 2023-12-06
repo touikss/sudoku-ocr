@@ -1,334 +1,424 @@
 #include "../headers/canny.h"
 #include "../headers/image_manipulation.h"
+#include "../headers/image.h"
+#include "../headers/sobel.h"
+#include "../headers/shape.h"
+#include "../headers/error.h"
+#include "../headers/shape_tab.h"
+#include "../headers/matrix.h"
+#include "../headers/rotations.h"
+#include <complex.h>
+#include <SDL2/SDL.h>   
 
-/*
-    Return "image" modified in gray scale.
-    Return NULL if an error occurred;
-*/
-SDL_Surface* ConvertSurfaceToGrayScale(SDL_Surface *image)
+void GridDetection(Image* image, ShapeTab* shapes, int smooth, int type)
 {
-    if (image == NULL){
-        fprintf(stderr, "Parameter \"image\" in ConvertSurfaceToGrayScale() is NULL\n");
-        return NULL; // Error
+    if (image == NULL || shapes == NULL)
+        Error("NULL parameter in GridDetection()");
+
+    int windowsSize = smooth;
+
+    printf("WINDOW SIZE = %d\n", windowsSize);
+
+    char* path = (char*)calloc(100, 8);
+    snprintf(path, 100, "tmp/pre-process_type_%d_wsize_%d", type, windowsSize);
+
+    if (type == 1){
+        Image_SmoothHistogram(image, windowsSize);
+        Image_EqualizeHistogram(image);
+        Image_Save(image, path);
+        SobelEdgeDetection(image, 80);
+        snprintf(path, 100, "tmp/sobel_type_%d_wsize_%d", type, windowsSize);
+        Image_ErodeEdges(image); 
+        Image_DilateEdges(image, 1);
+        Image_GaussianFilter(image, 3);
+        Image_Invert(image);
+        Image_ThresholdFilter(image, 200);
+        Image_Save(image, path);
     }
+    else if (type == 2){
+        Image_NormalizeHistogram(image);
+        Image_Levelize(image, smooth / 10 + 5);
 
-    for (int y = 0; y < image->h; y += 1) {
-        for (int x = 0; x < image->w; x += 1) {
-            Uint8 r,g,b,a;
-            GetPixelRGBA(image, x, y, &r, &g, &b, &a);
-            Uint8 gray = r * 0.2989 + g * 0.5870 + b * 0.1140; // Create gray value from rgb
-            SetPixelRGBA(image, x, y, gray, gray, gray, a); // Assign value to (x,y) pixel
-        }
-    }
-    return image; // OK
-}
+        Image_Save(image, path);
+        
+        SobelEdgeDetection(image, 1);
 
-/*
-    Return a copy of "image" with a Gaussian blur applied with a standard deviation of "smoothness".
-    Return NLL if an error occurred.
-*/
-SDL_Surface* ConvertSurfaceToGaussianBlur(SDL_Surface *image, int smoothness)
-{
-    if (image == NULL){
-        fprintf(stderr, "Parameter \"image\" in ConvertSurfaceToGaussianBlur() is NULL\n");
-        return NULL; // Error
-    }
-    if (smoothness <= 0)
-    {
-        fprintf(stderr, "Parameter \"n\" in ConvertSurfaceToGaussianBlur() is less than 0\n");
-        return NULL; // Error
-    }
+        snprintf(path, 100, "tmp/sobel_type_%d_wsize_%d", type, windowsSize);
+        Image_Save(image, path);
 
-    SDL_Surface *blured_image = SDL_CreateRGBSurface(0, image->w, image->h, 32,
-                                                     0, 0, 0, 0);
-    if (blured_image == NULL)
-    {
-        fprintf(stderr, "Error in ConvertSurfaceToGaussianBlur(): %s\n", SDL_GetError());
-        return NULL; // Error
-    }
-
-    // Compute the number of pixel that we will use to compute the new pixel value
-    const int pixel_count = (2 * smoothness + 1) * (2 * smoothness + 1);
-
-    for (int x = 0; x < image->w; x ++){
-        for (int y = 0; y < image->h; y ++){
-            int r = 0;
-            int g = 0;
-            int b = 0;
-            int a = 0;
-            // Browse pixels around
-            for (int i = x - smoothness; i <= x + smoothness; i ++){
-                for (int j = y - smoothness; j <= y + smoothness; j ++){
-                    if (j >= 0 && i >= 0 && j < image->h && i < image->w){
-                        Uint8 r1,g1,b1,a1;
-                        GetPixelRGBA(image, i, j, &r1, &g1, &b1, &a1);
-                        r += r1;
-                        g += g1;
-                        b += b1;
-                        a += a1;
-                    }
-                }
-            }
-            // Compute average
-            r /= pixel_count;
-            g /= pixel_count;
-            b /= pixel_count;
-            a /= pixel_count;
-            SetPixelRGBA(blured_image, x, y, (Uint8)r, (Uint8)g, (Uint8)b, (Uint8)a);
-        }
-    }
-
-    return blured_image; // OK
-}
-
-/*
-    Compute gradients (dy, dx, magnitude and orientation) of each pixel of "image".
-*/
-int CalculateGradients(SDL_Surface *image, Gradient* gradients) {
-
-    if (image == NULL || gradients == NULL) {
-        fprintf(stderr, "Invalid argument in CalculateGradients()\n");
-        return EXIT_FAILURE;
-    }
-
-    for (int y = 1; y < image->h - 1; y++) {
-        for (int x = 1; x < image->w - 1; x++) {
-
-            double dIy =  GetPixelLuminance(image, x - 1, y - 1) + 2 * GetPixelLuminance(image, x, y - 1) +
-            GetPixelLuminance(image, x + 1, y - 1) - GetPixelLuminance(image, x - 1, y + 1) -
-            2 * GetPixelLuminance(image, x, y + 1) - GetPixelLuminance(image, x + 1, y + 1);
-
-            double dIx = GetPixelLuminance(image, x - 1, y - 1) + 2 * GetPixelLuminance(image, x - 1, y) +
-            GetPixelLuminance(image, x - 1, y + 1) - GetPixelLuminance(image, x + 1, y - 1) -
-            2 * GetPixelLuminance(image, x + 1, y) - GetPixelLuminance(image, x + 1, y + 1);
-
-            gradients[y * image->w + x].magnitude = sqrt(pow(dIx, 2) + pow(dIy, 2));
-            gradients[y * image->w + x].orientation = atan2(dIy, dIx);
-            gradients[y * image->w + x].dIx = dIx;
-            gradients[y * image->w + x].dIy = dIy;
-        }
-    }
-    return EXIT_SUCCESS;
-}
-
-/*
-    Return a copy of "Gradient".
-    Return NULL if an error occurred.
-*/
-Gradient* CopyGradients(const Gradient* gradients, int width, int height) {
-
-    Gradient* copy = (Gradient*)malloc(width * height * sizeof(Gradient));
-
-    if (copy == NULL) {
-        fprintf(stderr, "Malloc error in CopyGradients()\n");
-        return NULL;
-    }
-
-    memcpy(copy, gradients, width * height * sizeof(Gradient));
-
-    return copy;
-}
-
-int DeleteNonMaximum(Gradient* gradients, int width, int height)
-{
-
-    double a[4];
-    a[0] = M_PI/8;
-    for (int k = 1; k< 4; k ++) a[k] = a[k-1] + M_PI/4;
-
-    // Copy gradients into a new tab
-    Gradient* G = CopyGradients(gradients, width, height);
-    if (!G)
-        return EXIT_FAILURE;
-
-    for (int j = 1; j < height - 1; j++) {
-        for (int i = 1; i < width - 1; i++) {
-            Gradient g1, g2;
-            if (G[j * width + i].magnitude != 0) {
-                double theta = G[j * width + i].orientation;
-                if (theta > 0) {
-
-                    if (theta<a[0] || theta>a[3]) {g1 = G[j * width + i+1]; g2 = G[j * width + i+1];}
-                    else if(theta<a[1]) {g1 = G[(j+1) * width + i + 1]; g2 = G[(j-1) * width + i-1];}
-                    else if (theta<a[2]) {g1 = G[(j+1) * width + i]; g2 = G[(j-1) * width + i];}
-                    else {g1 = G[(j+1) * width + i-1]; g2 = G[(j-1) * width + i+1];}
-                }
-                else if (theta<0){
-                    if (theta<-a[3]) {g1 = G[j * width + i+1]; g2 = G[j * width + i-1];}
-                    else if (theta<-a[2]) {g1 = G[(j-1) * width + i-1]; g2 = G[(j+1) * width + i+1];}
-                    else if (theta<-a[1]) {g1 = G[(j-1) * width + i]; g2 = G[(j+1) * width + i];}
-                    else if (theta<-a[0]) {g1 = G[(j-1) * width + i+1]; g2 = G[(j+1) * width + i-1];}
-                    else {g1 = G[j * width + i+1]; g2 = G[j * width + i-1];}
-                }
-                if (G[j * width + i].magnitude < g1.magnitude || G[j * width + i].magnitude<g2.magnitude)
-                    gradients[j * width + i].magnitude = 0.0;
-            }
-        }
-    }
-    // Free copy memory
-    free(G);
-    return EXIT_SUCCESS;
-}
-/*
-    Apply threshold to gradient.
-*/
-int ApplyGradientThreshold(Gradient* gradients, int height, int width, double low_threshold, double high_threshold)
-{
-    // Copy gradients into a new tab
-    Gradient* copy = CopyGradients(gradients, width, height);
-    if (!copy)
-        return EXIT_FAILURE;
-
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            double gradient_magnitude = copy[y * width + x].magnitude;
-
-            if (gradient_magnitude >= high_threshold) {
-                gradients[y * width + x].strength = 1;
-            } else if (gradient_magnitude >= low_threshold) {
-                gradients[y * width + x].strength = 0;
-            } else {
-                gradients[y * width + x].strength = -1;
-            }
-        }
-    }
-
-    // Free copy memory
-    free(copy);
-    return EXIT_SUCCESS;
-}
-
-/*
-    Apply hysteresis contour tracking to gradients.
-*/
-int TrackHysteresisContour(Gradient* gradients, int height, int width)
-{
-    // Copy gradients into a new tab
-    Gradient* copy = CopyGradients(gradients, width, height);
-    if (!copy)
-        return EXIT_FAILURE;
-
-    for (int y = 1; y < height - 1; y++) {
-        for (int x = 1; x < width - 1; x++) {
-
-                if (copy[y * width + x].strength == 0){
-
-                    int has_white_neighbour = 0;
-                    for (int j = y - 1; j < y + 2; j ++){
-                        for (int i = x - 1; i < x + 2; i ++){
-                            if (copy[j * width + i].strength > 0)
-                            {
-                                has_white_neighbour = 1;
-                            }
-
-                        }
-                    }
-                    if (has_white_neighbour == 1)
-                        gradients[y * width + x].strength = 1;
-                    else
-                        gradients[y * width + x].strength = -1;
-                }
-        }
-    }
-
-    // Free copy memory
-    free(copy);
-    return EXIT_SUCCESS;
-}
-
-/*
-    Return a surface from gradients.
-    Manner depend on flag
-*/
-SDL_Surface* ConvertGradientsToSurface(Gradient* gradients, int height, int width, int flag)
-{
-    SDL_Surface *image = SDL_CreateRGBSurface(0,width, height, 32, 0, 0, 0, 0);
-    if (flag == DX_MASK)
-    {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                Uint8 d = (Uint8)gradients[y * width + x].dIx;
-                SetPixelRGBA(image, x, y, d, d, d, 255);
-            }
-        }
-    }
-    else if (flag == DY_MASK)
-    {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                Uint8 d = (Uint8)gradients[y * width + x].dIy;
-                SetPixelRGBA(image, x, y, d, d, d, 255);
-            }
-        }
-    }
-    else if (flag == ORIENTATION_MASK)
-    {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                Uint8 d = (Uint8)gradients[y * width + x].orientation;
-                SetPixelRGBA(image, x, y, d, d, d, 255);
-            }
-        }
-    }
-    else if (flag == MAGNITUDE_MASK)
-    {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                Uint8 d = (Uint8)gradients[y * width + x].magnitude;
-                SetPixelRGBA(image, x, y, d, d, d, 255);
-            }
-        }
-    }
-    else if (flag == STRENGTH_MASK)
-    {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                if (gradients[y * width + x].strength == 1)
-                    SetPixelRGBA(image, x, y, 255, 255, 255, 255);
-            }
-        }
+        Image_ThresholdFilter(image, 2);
+        Image_Invert(image);
+        Image_DilateEdges(image, 1);
+        Image_DilateEdges(image, 4);
+        Image_GaussianFilter(image, 3);
+        Image_Invert(image);
+        Image_ThresholdFilter(image, 130);
     }
     else{
-        fprintf(stderr, "Unknown flag in gradientToSurface(): %d\n", flag);
-        return NULL;
-    }
+        Image_GaussianFilter(image, 1);
+        
+        Image_Save(image, path);
+        
+        SobelEdgeDetection(image, 1);
 
-    return image;
+        snprintf(path, 100, "tmp/sobel_type_%d_wsize_%d", type, windowsSize);
+        Image_Save(image, path);
+
+        Image_ThresholdFilter(image, smooth + 20);
+        Image_Invert(image);
+    }
+    
+    Image_LabelComponent(image, shapes);
+
+    ShapeTab_FoundGrid(shapes);
+    
+    if (shapes->grid == NULL)
+        Error("Error while searching the grid in TabShape in GridDetection()");
+
+    ShapeTab_KeepOnlyGrid(shapes);
+
+    if (shapes->size != 1)
+        errx(EXIT_FAILURE, "Trop de formes détectées. Ou pas assez...");
+
+    Image_Clear(image);
+    Image_DrawShape(image, shapes->grid, WHITE);
+    Image_Invert(image);
+
+    Image_LabelComponent(image, shapes);
+
+    ShapeTab_ComputeDescriptors(shapes);
+    Image_DrawDescriptorsLinks(image, shapes);
+
+    snprintf(path, 100, "tmp/label_type_%d_wsize_%d", type, windowsSize);
+    Image_Save(image, path);
+
+    ShapeTab_RemoveExcludedShape(shapes, shapes->grid);
+    ShapeTab_UpdateIsSquare(shapes);
+    ShapeTab_KeepOnlySquare(shapes);
+
+    Image_Clear(image);
+    Image_DrawShapeTab(image, shapes);
+
+    free(path);
 }
 
-/*
-    Apply canny filter to image and return the result.
-*/
-SDL_Surface* ApplyCannyFilter(SDL_Surface *image, int blur_straight, double low_threshold, double high_threshold, int display_flag)
+
+
+void Image_Rotate(Image *image, double angle) 
 {
-    Gradient *gradients = (Gradient *)malloc(image->w * image->h * sizeof(Gradient));
-    if (gradients == NULL) {
-        fprintf(stderr, "Malloc error in ApplyCannyFilter()\n");
-        return NULL;
+    int center_x = image->width / 2;
+    int center_y = image->height / 2;
+    int width = image->width;
+    int height = image->height;
+    Image out = Image_CreateBlack(image->width, image->height);
+    //Image out = Image_Copy(image);
+    for (int x = 0; x < width; x++)
+    {
+        for (int y = 0; y < height; y++)
+        {
+            float dx = x - center_x;
+            float dy = y - center_y;
+
+            float new_x_float = center_x + dx * cos(angle) - dy * sin(angle);
+            float new_y_float = center_y + dx * sin(angle) + dy * cos(angle);
+
+            float new_x_frac = new_x_float - floor(new_x_float);
+            float new_y_frac = new_y_float - floor(new_y_float);
+
+            int x1 = (int)floor(new_x_float);
+            int x2 = x1 + 1;
+            int y1 = (int)floor(new_y_float);
+            int y2 = y1 + 1;
+
+            if (x1 >= 0 && x2 < width && y1 >= 0 && y2 < height)
+            {
+                out.pixels[x][y].r = (1 - new_x_frac) * (1 - new_y_frac) * image->pixels[x1][y1].r +
+                                     new_x_frac * (1 - new_y_frac) * image->pixels[x2][y1].r +
+                                     (1 - new_x_frac) * new_y_frac * image->pixels[x1][y2].r +
+                                     new_x_frac * new_y_frac * image->pixels[x2][y2].r;
+
+                out.pixels[x][y].g = (1 - new_x_frac) * (1 - new_y_frac) * image->pixels[x1][y1].g +
+                                     new_x_frac * (1 - new_y_frac) * image->pixels[x2][y1].g +
+                                     (1 - new_x_frac) * new_y_frac * image->pixels[x1][y2].g +
+                                     new_x_frac * new_y_frac * image->pixels[x2][y2].g;
+
+                out.pixels[x][y].b = (1 - new_x_frac) * (1 - new_y_frac) * image->pixels[x1][y1].b +
+                                     new_x_frac * (1 - new_y_frac) * image->pixels[x2][y1].b +
+                                     (1 - new_x_frac) * new_y_frac * image->pixels[x1][y2].b +
+                                     new_x_frac * new_y_frac * image->pixels[x2][y2].b;
+            }
+        }
     }
 
-    image = ConvertSurfaceToGaussianBlur(image, blur_straight);
-    if (!image)
-        return NULL;
-
-    if (CalculateGradients(image, gradients) != 0)
-        return NULL;
-    if (DeleteNonMaximum(gradients, image->w, image->h) != 0)
-        return NULL;
-    if (ApplyGradientThreshold(gradients, image->h, image->w, low_threshold, high_threshold) != 0)
-        return NULL;
-    if (TrackHysteresisContour(gradients, image->h, image->w) != 0)
-        return NULL;
-    return ConvertGradientsToSurface(gradients, image->h, image->w, display_flag);
+    Image_Clone(&out, image);
+    Image_Free(&out);
 }
 
 
 
+SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
+{    
+    if (surface == NULL)
+        Error("NULL parameter in ApplyCannyFilter");
+
+    //Image image = Image_CreateFromSurface(surface, surface->w, surface->h);
+    Image copy = Image_CreateFromSurface(surface, surface->w, surface->h);
+
+    ShapeTab* verified = ShapeTab_Create(70);
+    Shape* matrice[16][16] = {NULL};
+    Shape* matrice2[16][16] = {NULL};
+    Shape* matrice3[16][16] = {NULL};
+
+    int detected = 0;
+    int iteration = 0;
+    int filter = 1;
+    int bestFilter = 1;
+    int prev = 0;
+
+    for (filter = 1;detected != 1 && filter < 4; filter++)
+    {
+        iteration = 0;
+        int smooth = 10;
+        int len = Matrix_Count(matrice);
+
+        if (len > prev){
+            prev = len;
+            bestFilter = filter;
+        }
+
+        if (filter == 3){
+            // Copy matrice in matrice 2
+            for (int i = 0; i < 16; i ++){
+                for (int j = 0; j < 16; j ++){
+                    matrice2[i][j] = matrice[i][j];
+                }
+            }
+            Matrix_Clear(matrice);
+            for (Shape* current = verified->data->next; current;){
+                ShapeTab_RemoveShape(verified, current, 0);
+            }
+        }
+
+        while(detected != 1 && iteration < 5)
+        {
+
+            if (filter == 3){
+                int h = Matrix_Height(matrice);
+                int w = Matrix_Width(matrice);
+
+                if ((h == 9 || h == 16 || w == 9 || w == 16 ) && Matrix_Count(matrice) > Matrix_Count(matrice3))
+                {
+                    // Copy matrice in matrice 3
+                    for (int i = 0; i < 16; i ++){
+                        for (int j = 0; j < 16; j ++){
+                            matrice3[i][j] = matrice[i][j];
+                        }
+                    }
+                }
+                Matrix_Clear(matrice);
+                for (Shape* current = verified->data->next; current;){
+                    ShapeTab_RemoveShape(verified, current, 0);
+                }
+            }
+
+            Image image = Image_CreateFromSurface(surface, surface->w, surface->h);
+            ShapeTab* shapes = ShapeTab_Create(90);
+
+           /* printf("----- ITERATION : %d -----\n", iteration + 1);
+            printf("SMOOTHNESS = %d\n", smooth);
+            printf("----- BEFORE -----\n");
+
+            ShapeTab_PrintInfos(shapes);
+            printf("\n");*/
+
+            char* path = (char*)calloc(100, 8);
+            snprintf(path, 100, "tmp/filter_%d_iteration_%d", filter, iteration);
+
+            GridDetection(&image, shapes, smooth, filter);
+
+            Image_Save(&image, path);
+
+            ShapeTab_ComputeDescriptors(shapes);
+            ShapeTab_UpdateIsSquare(shapes);
+
+            ShapeTab_KeepOnlySquare(shapes);          
+
+            ShapeTab_UpdateCountSquaresAndTilted(shapes);
+            if (shapes->data->next){
+                Shape* grid = ShapeTab_GetBiggestShape(shapes);
+                Shape_ComputeDescriptors(grid);
+                //printf("ANGLE GRID = %lf\n", Shape_ComputeAngle(grid) * 180 / M_PI);
+                ShapeTab_ComputeAverage(shapes, grid);
+                ShapeTab_ComputeStandardDeviation(shapes, grid);
+                ShapeTab_RemoveInconsistency(shapes, grid, 2);
+            }
+
+            iteration ++;
+            smooth += 10;
+
+            ShapeTab_PasteVerified(shapes, verified);
+            ShapeTab_ComputeAverage(verified, NULL);
+            ShapeTab_ComputeStandardDeviation(shapes, NULL);
+            ShapeTab_RemoveInconsistency(verified, NULL, 1);
+            ShapeTab_SetTilted(verified);
+
+            detected = Matrix_IsConsistent(verified, NULL, matrice);
+
+            snprintf(path, 100, "tmp/matrix_fi lter_%d_iteration_%d", filter, iteration);
+            Image_Clear(&image);
+            Image_DrawMatrix(&image, matrice);
+            if (matrice[2][7])
+                Image_DrawShape(&image, matrice[2][7], WHITE);
+            Image_Save(&image, path);
 
 
 
+        /*    printf("----- AFTER -----\n");
+            printf("----- SHAPES -----\n");
+            ShapeTab_PrintInfos(shapes);
+            printf("----- VERIFIED -----\n");
+            ShapeTab_PrintInfos(verified);
+
+            printf("\n\n");*/
+            
+            Image_Clone(&image, &copy);
+
+            Image_Free(&image);
+            ShapeTab_Free(shapes);
+        }
+    }
+
+    // Keep the best matrice
+    if (Matrix_Count(matrice2) > Matrix_Count(matrice)){
+        for (int i = 0; i < 16; i ++){
+            for (int j = 0; j < 16; j ++){
+                matrice[i][j] = matrice2[i][j];
+            }
+        }
+    }
+    if (Matrix_Count(matrice3) > Matrix_Count(matrice)){
+        for (int i = 0; i < 16; i ++){
+            for (int j = 0; j < 16; j ++){
+                matrice[i][j] = matrice3[i][j];
+            }
+        }
+    }
+
+    Matrix_Print(matrice);
 
 
+    int hm = Matrix_Height(matrice);
+    int wm = Matrix_Width(matrice);
+
+    if ((hm == 9 || hm == 16) && (wm == 9 || wm == 16)){
+        Matrix_EstimateCase(matrice);
+        Image_Clear(&copy);
+        Image_DrawMatrix(&copy, matrice);
+        detected = Matrix_Count(matrice) == 81 || Matrix_Count(matrice) == 256;
+    }
+
+    if (detected){
+        char* path = (char*)malloc(40); 
+        Image origin = Image_CreateFromSurface(surface, surface->w, surface->h);
+        
+        double a = 0;
+        int titled;
+        for (int i = 0; i < 16; i ++){
+            for (int j = 0; j < 16; j ++){
+                if (matrice[i][j] && matrice[i][j]->isTilted){
+                    titled ++;
+                    a += Point_Angle(matrice[i][j]->descriptor[3], matrice[i][j]->descriptor[1]);
+                }
+            }
+        }
+
+        if (titled > 40){
+            a /= titled;
+            Image_Rotate(&origin, a - M_PI_2 * 3);
+            Image_Save(&origin, "ROTATED");
+        }
+
+        int count = 0;
+        for (int i = 0; i < 16; i ++){
+            for (int j = 0; j < 16; j ++){  
+                Shape* current = matrice[i][j];
+                if (current != NULL){
+                    count ++;
+                    snprintf(path, 20, "output/ha_%d%d", i, j);
+                    SDL_Rect rect;
+
+                    int width = current->width;
+                    int height = current->height;
+                    
+                    double angle = Point_Angle(current->descriptor[3], current->descriptor[1]) - M_PI_2 * 3;
+                    if (angle == NAN)
+                        Error("Invalid angle in ApplyCannyFilter()");
+
+                    if (current->isTilted){
+                        width = current->descriptor[1].x - current->descriptor[0].x;
+                        height = current->descriptor[3].y - current->descriptor[2].y;
+                    }
+                    rect.x = current->averageX - width / 2;
+                    rect.y = current->averageY - height / 2;
+                    rect.w = current->width;
+                    rect.h = current->height;
+
+                    if (current->isTilted){
+                        double b = -a + M_PI_2 * 3;
+                        float dx = current->averageX - origin.width/2;
+                        float dy = current->averageY - origin.height/2;
+
+                        float new_x_float = origin.width/2 + dx * cos(b) - dy * sin(b);
+                        float new_y_float = origin.height/2 + dx * sin(b) + dy * cos(b);
+
+                        unsigned int new_x = (int)floor(new_x_float);
+                        unsigned int new_y = (int)floor(new_y_float);
+                        rect.x = new_x - width/2;
+                        rect.y = new_y - height/2;
+                        //Image_Rotate(&caseImage, angle - M_PI_2 * 3);
+
+                        Image_DrawPoint(&origin, (Point){new_x, new_y}, RED, 3);
+                    }
+
+                    Image caseImage = Image_Crop(&origin, &rect);
+                        
+                    
+                    snprintf(path, 20, "output/case_%x%x", i, j);
+                    Image_Save(&caseImage, path);
+                    Image_Free(&caseImage); 
+                    Image_Save(&origin, "FINAL");
+                }
+            }
+        }
+        double angle = ShapeTab_ComputeAngle(verified) * 180 / M_PI;
+        printf("COUNT = %d\n", count);
+        rotate(&origin, angle);
+        Image_Save(&origin, "ROTATÉE");
+        Image_Free(&origin);
+    }
+
+    else{
+        Error("No grid detected.");
+    }
 
 
+    ShapeTab_Free(verified);
 
+    printf("----- RESULT -----\n");
+    printf("ITERAION = %d\n", iteration);
+    printf("FOUND = %s\n", detected? "YES" : "NO");
+
+    SDL_Surface* res =  Image_CreateSurface(&copy);
+    Image_Free(&copy);
+
+
+    for (int i = 0; i < 16; i ++){
+        for (int j = 0; j < 16; j ++){  
+            Shape* current = matrice[i][j];
+            if (current != NULL)
+                Shape_Free(current);
+        }
+    }
+
+    return res;
+}

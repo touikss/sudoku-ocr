@@ -34,6 +34,6 @@ int TrackHysteresisContour(Gradient* gradients, int height, int width);
 
 SDL_Surface* ConvertGradientsToSurface(Gradient* gradients, int height, int width, int flag);
 
-SDL_Surface* ApplyCannyFilter(SDL_Surface *image, int blurStraight, double lowThreshold, double highThreshold, int displayFlag);
+SDL_Surface* ApplyCannyFilter(SDL_Surface *image);
 
 #endif
