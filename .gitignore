@@ -1,3 +1,7 @@
+output/
+tmp/
+data_set/
+
 # Prerequisites
 *.d
 
