@@ -416,7 +416,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         }
     }
 
-    // Keep the best matrice
+    // Keep the best matrix
     if (Matrix_Count(matrice2) > Matrix_Count(matrice)){
         for (int i = 0; i < 16; i ++){
             for (int j = 0; j < 16; j ++){
@@ -539,7 +539,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                     //Image_ThresholdFilter(&copy, thresh);
                     Image_Free(&caseImage); 
                     Image_Free(&resized);
-                    Image_Save(&origin, "FINAL");
+                    //Image_Save(&origin, "FINAL");
                     //ShapeTab_Free(tab);
                 }
             }
@@ -555,6 +555,11 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         Error("No grid detected.");
     }
 
+
+    Image imageBlack = Image_CreateBlack(surface->w, surface->h);
+    Image_DrawShapeTab(&imageBlack, verified);
+    Image_Save(&imageBlack, "tmp/verified");
+    Image_Free(&imageBlack);
 
     ShapeTab_Free(verified);
 
@@ -573,6 +578,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                 Shape_Free(current);
         }
     }
+
 
     return res;
 }
