@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include "../headers/image.h"
 
 #define DY_MASK (1<<1)
 #define DX_MASK (1<<2)
@@ -35,5 +36,7 @@ int TrackHysteresisContour(Gradient* gradients, int height, int width);
 SDL_Surface* ConvertGradientsToSurface(Gradient* gradients, int height, int width, int flag);
 
 SDL_Surface* ApplyCannyFilter(SDL_Surface *image);
+
+void Image_Rotate(Image *image, double angle);
 
 #endif

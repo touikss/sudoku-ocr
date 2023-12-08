@@ -29,5 +29,9 @@ Image2* convert_im_to_im2(Image image)
         }
     }
 
+    res->surface = Image_CreateSurface(&image);
+    res->average_color = image.averageColor;
+
+
     return res;
 }

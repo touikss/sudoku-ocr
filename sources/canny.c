@@ -143,9 +143,58 @@ void GridDetection(Image* image, ShapeTab* shapes, int smooth, int type, int ima
     free(path);
 }
 
-
-
 void Image_Rotate(Image *image, double angle) 
+{
+    int center_x = image->width / 2;
+    int center_y = image->height / 2;
+    int width = image->width;
+    int height = image->height;
+    Image out = Image_CreateBlack(image->width, image->height);
+    //Image out = Image_Copy(image);
+    for (int x = 0; x < width; x++)
+    {
+        for (int y = 0; y < height; y++)
+        {
+            float dx = x - center_x;
+            float dy = y - center_y;
+
+            float new_x_float = center_x + dx * cos(angle) - dy * sin(angle);
+            float new_y_float = center_y + dx * sin(angle) + dy * cos(angle);
+
+            float new_x_frac = new_x_float - floor(new_x_float);
+            float new_y_frac = new_y_float - floor(new_y_float);
+
+            int x1 = (int)floor(new_x_float);
+            int x2 = x1 + 1;
+            int y1 = (int)floor(new_y_float);
+            int y2 = y1 + 1;
+
+            if (x1 >= 0 && x2 < width && y1 >= 0 && y2 < height)
+            {
+                out.pixels[x][y].r = (1 - new_x_frac) * (1 - new_y_frac) * image->pixels[x1][y1].r +
+                                     new_x_frac * (1 - new_y_frac) * image->pixels[x2][y1].r +
+                                     (1 - new_x_frac) * new_y_frac * image->pixels[x1][y2].r +
+                                     new_x_frac * new_y_frac * image->pixels[x2][y2].r;
+
+                out.pixels[x][y].g = (1 - new_x_frac) * (1 - new_y_frac) * image->pixels[x1][y1].g +
+                                     new_x_frac * (1 - new_y_frac) * image->pixels[x2][y1].g +
+                                     (1 - new_x_frac) * new_y_frac * image->pixels[x1][y2].g +
+                                     new_x_frac * new_y_frac * image->pixels[x2][y2].g;
+
+                out.pixels[x][y].b = (1 - new_x_frac) * (1 - new_y_frac) * image->pixels[x1][y1].b +
+                                     new_x_frac * (1 - new_y_frac) * image->pixels[x2][y1].b +
+                                     (1 - new_x_frac) * new_y_frac * image->pixels[x1][y2].b +
+                                     new_x_frac * new_y_frac * image->pixels[x2][y2].b;
+            }
+        }
+    }
+
+    Image_Clone(&out, image);
+    Image_Free(&out);
+}
+
+
+void Image_Rotate2(Image *image, double angle) 
 {
     int center_x = image->width / 2;
     int center_y = image->height / 2;
