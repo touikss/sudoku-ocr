@@ -83,7 +83,7 @@ Img** csv_to_imgs(char* file_string, int number_of_imgs) {
 		i++;
 	}
 
-	printf("Image loaded : %d\n", i);
+	printf("Image3 loaded : %d\n", i);
 
 	fclose(fp);
 	return imgs;
@@ -110,7 +110,7 @@ void bmp_to_csv(const char *bmp_file, const char *csv_file) {
     }
 
     // Lire les données des pixels de l'image BMP
-    Image image;
+    Image3 image;
     for (int i = 0; i < 28; i++) {
         for (int j = 0; j < 28; j++) {
             Uint32 pixel = *(Uint32 *)(image_surface->pixels + (i * image_surface->pitch) + (j * image_surface->format->BytesPerPixel));

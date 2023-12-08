@@ -18,8 +18,8 @@ void imgs_free(Img **imgs, int n);
 // added
 typedef struct {
     uint8_t value;
-} Pixel;
+} Pixel3;
 
 typedef struct {
-    Pixel pixels[28][28];
-} Image;
+    Pixel3 pixels[28][28];
+} Image3;

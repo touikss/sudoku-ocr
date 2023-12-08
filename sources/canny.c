@@ -281,6 +281,7 @@ Image Image_Resize28(Image *original) {
     return resized;
 }
 
+
 SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
 {    
     deleteFilesInDirectory("output");
@@ -555,19 +556,16 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         Error("No grid detected.");
     }
 
-
-    Image imageBlack = Image_CreateBlack(surface->w, surface->h);
-    Image_DrawShapeTab(&imageBlack, verified);
-    Image_Save(&imageBlack, "tmp/verified");
-    Image_Free(&imageBlack);
-
+    Image rese = Image_CreateFromSurface(surface, surface->w, surface->h);
+    Image_DrawMatrix(&rese, matrice);
     ShapeTab_Free(verified);
 
     printf("----- RESULT -----\n");
     printf("ITERAION = %d\n", iteration);
     printf("FOUND = %s\n", detected? "YES" : "NO");
 
-    SDL_Surface* res =  Image_CreateSurface(&copy);
+    SDL_Surface* res =  Image_CreateSurface(&rese);
+    Image_Save(&copy, "tmp/grid");
     Image_Free(&copy);
 
 
@@ -578,7 +576,6 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                 Shape_Free(current);
         }
     }
-
 
     return res;
 }

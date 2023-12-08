@@ -5,6 +5,7 @@
 #include "../headers/convert.h"
 #include "../headers/image_manipulation.h"
 #include "../headers/rotations.h"
+#include "../headers/nn.h"
 
 
 #define IMAGE_SIZE 500
@@ -22,6 +23,7 @@
 SDL_Surface* globalImage;
 
 double rotateScale = 0;
+int hexa = 0;
 
 struct StepIndicators
 {
@@ -321,8 +323,11 @@ gboolean grid_detection_finished(gpointer data)
 
     main_window->images->is_grid_detected = TRUE;
 
-    display_image(main_window->pages->page4->image,
-                  main_window->images->image_rotated_clean, main_window);
+    //display_image(main_window->pages->page4->image,
+      //            main_window->images->image_rotated_clean, main_window);  
+
+    //display_image(main_window->pages->page4->image,
+      //            SDL_Surface_to_Image2(load_image("test.png")), main_window);
 
     set_step(main_window->step_indicators, 4);
 
@@ -343,10 +348,7 @@ void *grid_detection_handler(gpointer data)
     globalImage = ApplyCannyFilter(globalImage);
     Image_Free(&temp);
 
-    Image toSave = Image_CreateFromSurface(globalImage, globalImage->w, globalImage->h);
-    Image_Save(&toSave, "test.png");
-    main_window->images->image_rotated_clean = convert_im_to_im2(toSave);
-
+    *main_window->images->current_image = SDL_Surface_to_Image2(globalImage);
 
     g_idle_add(grid_detection_finished, main_window);
 
@@ -377,8 +379,8 @@ void process_image(GtkWidget *_, gpointer data)
     gtk_widget_hide(GTK_WIDGET(main_window->controls->rotation_left));
     gtk_widget_hide(GTK_WIDGET(main_window->controls->rotation_right));
     set_step(main_window->step_indicators, 3);
-    display_image(main_window->pages->page4->image,
-                  main_window->images->image_rotated, main_window);
+    //display_image(main_window->pages->page4->image,
+          //        main_window->images->image_rotated, main_window);
 
     g_thread_new("grid_detection_handler", (GThreadFunc)grid_detection_handler,
                  main_window);
@@ -475,6 +477,28 @@ void window_destroy(GtkWidget *_, gpointer data)
     free(main_window->images->current_container);*/
 
     gtk_main_quit();
+}
+
+void ocr(gpointer data)
+{
+    int mat[16][16];
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 16; j++) {
+            mat[i][j] = -1;
+        }
+    }
+
+    perform_nn(0, mat);
+
+    for (int i = 0; i < 16; i ++){
+        for (int j = 0; j < 16; j ++){
+            if (mat[i][j] < 0)
+                printf("  |");
+            else
+                printf("%2d|", mat[i][j]);
+        }
+        printf("\n");
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -684,6 +708,9 @@ int main(int argc, char *argv[]) {
 
     g_signal_connect(confirm_image_button, "clicked",
                      G_CALLBACK(manual_rotate_image), &main_window);
+    
+    g_signal_connect(confirm_crop_button, "clicked",
+                G_CALLBACK(ocr), &main_window);
 
     // File selection
     g_signal_connect(file_chooser_button, "selection-changed",
@@ -709,6 +736,9 @@ int main(int argc, char *argv[]) {
             page2_image, "draw", G_CALLBACK(draw_image), &main_window);
     g_signal_connect(
             page3_image, "draw", G_CALLBACK(draw_image), &main_window);
+    g_signal_connect(
+            page4_image, "draw", G_CALLBACK(draw_image), &main_window);
+
 
 
     // Affichage de la fenêtre principale
