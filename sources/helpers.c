@@ -42,7 +42,7 @@ void insertionSort(int arr[], int n)
  * @param normalize normalize values
  */
 void convolution(
-    double *kernel, int ksize, Image *image, Image *out, bool normalize)
+    double *kernel, int ksize, Image2 *image, Image2 *out, bool normalize)
 {
     if (ksize % 2 == 0)
         ksize++;
@@ -109,7 +109,7 @@ void convolution(
             if (normalize)
                 pixel = 255 * (pixel - min) / (max - min);
 
-            Pixel pix = {pixel, pixel, pixel};
+            Pixel2 pix = {pixel, pixel, pixel};
             out->pixels[m][n] = pix;
             pindex++;
         }
@@ -128,7 +128,7 @@ void convolution(
  * @param out
  */
 void convolution_mat(
-    double *kernel, int ksize_x, int ksize_y, Image *in, int *out)
+    double *kernel, int ksize_x, int ksize_y, Image2 *in, int *out)
 {
     int w = in->width;
     int h = in->height;
@@ -203,7 +203,7 @@ double clamp(double d, double min, double max)
 }
 
 void verbose_save(
-    bool verbose_mode, char *verbose_path, char *file_name, Image *image)
+    bool verbose_mode, char *verbose_path, char *file_name, Image2 *image)
 {
     if (verbose_mode)
     {
@@ -211,7 +211,7 @@ void verbose_save(
         strcpy(t, verbose_path);
         strcat(t, "/");
         strcat(t, file_name);
-        save_image(Image_to_SDL_Surface(image), t);
+        save_image(Image2_to_SDL_Surface(image), t);
         return;
     }
     return;

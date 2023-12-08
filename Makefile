@@ -4,10 +4,10 @@ EXECUTABLE = main
 CC = gcc
 
 # Compilation options
-CFLAGS = -Wall -Wextra -std=c99 -g -D_GNU_SOURCE
+CFLAGS = -Wall -Wextra -std=c99 -g -D_GNU_SOURCE $(shell pkg-config gtk+-3.0 --cflags)
 
 # Libs
-LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lm $(shell pkg-config --libs gtk+-3.0 glib-2.0)
+LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lm $(shell pkg-config gtk+-3.0 --libs) -I/usr/include/gtk/gtk.h -I/usr/include/gdk/gdk.h
 
 # Directories
 SRC_DIR = sources
@@ -35,3 +35,4 @@ clean:
 	rm -f $(OBJECTS) $(EXECUTABLE)
 
 .PHONY: all clean
+

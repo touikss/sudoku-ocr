@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-#include "../headers/op.h"
+//#include "../headers/op.h"
 #include "../headers/pixel_operations.h"
 #include "../headers/shape.h"
 #include "../headers/shape_tab.h"

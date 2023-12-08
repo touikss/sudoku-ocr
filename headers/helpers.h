@@ -12,7 +12,7 @@ void _mkdir(const char *dir);
 
 double clamp(double d, double min, double max);
 
-void verbose_save(bool verbose_mode, char *verbose_path, char *file_name, Image *image);
+void verbose_save(bool verbose_mode, char *verbose_path, char *file_name, Image2 *image);
 
 double degrees_to_rad(double degrees);
 
@@ -25,9 +25,9 @@ int min_arr_index(int array[], int size);
 void free_2d_arr(int **arr, int size);
 
 void convolution(
-    double *kernel, int ksize, Image *image, Image *out, bool normalize);
+    double *kernel, int ksize, Image2 *image, Image2 *out, bool normalize);
 
 void convolution_mat(
-    double *kernel, int ksize_x, int ksize_y, Image *in, int *out);
+    double *kernel, int ksize_x, int ksize_y, Image2 *in, int *out);
 
 #endif

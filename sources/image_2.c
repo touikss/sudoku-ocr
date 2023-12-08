@@ -8,21 +8,21 @@
 #include "../headers/image_2.h"
 //#include "SDL2/SDL.h"
 #include <SDL2/SDL_image.h>
-#include "../headers/pixel_operations_2.h"
+#include "../headers/pixel_operations.h"
 
-Image *create_image(int height, int width)
+Image2 *create_image(int height, int width)
 {
-    Image *image = malloc(sizeof(Image));
+    Image2 *image = malloc(sizeof(Image2));
 
     image->height = height;
     image->width = width;
-    image->pixels = malloc(sizeof(Pixel *) * width + 1);
+    image->pixels = malloc(sizeof(Pixel2 *) * width + 1);
 
     if (image->pixels == NULL)
         errx(1, "Error when allocating memory in create_image.");
 
     for (int x = 0; x < width; x++)
-        image->pixels[x] = malloc(sizeof(Pixel) * height + 1);
+        image->pixels[x] = malloc(sizeof(Pixel2) * height + 1);
 
     image->surface = SDL_CreateRGBSurfaceWithFormat(
         0, width, height, 32, SDL_PIXELFORMAT_RGBA32);
@@ -36,7 +36,7 @@ Image *create_image(int height, int width)
     return image;
 }
 
-GdkPixbuf *image_to_pixbuf(Image *image)
+GdkPixbuf *image_to_pixbuf(Image2 *image)
 {
     GdkPixbuf *pixbuf = gdk_pixbuf_new(
         GDK_COLORSPACE_RGB, TRUE, 8, image->width, image->height);
@@ -63,7 +63,7 @@ GdkPixbuf *image_to_pixbuf(Image *image)
     return pixbuf;
 }
 
-Image *pixbuf_to_image(GdkPixbuf *pixbuf)
+Image2 *pixbuf_to_image(GdkPixbuf *pixbuf)
 {
     int width = gdk_pixbuf_get_width(pixbuf);
     int height = gdk_pixbuf_get_height(pixbuf);
@@ -72,7 +72,7 @@ Image *pixbuf_to_image(GdkPixbuf *pixbuf)
     int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
     guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
 
-    Image *image = create_image(height, width);
+    Image2 *image = create_image(height, width);
     image->width = width;
     image->height = height;
 
@@ -90,6 +90,7 @@ Image *pixbuf_to_image(GdkPixbuf *pixbuf)
     return image;
 }
 
+/*
 SDL_Surface *load_image(char *path)
 {
     //printf("-->📁 Opening %s\n", path);
@@ -103,7 +104,7 @@ SDL_Surface *load_image(char *path)
         errx(3, "can't load %s: %s", path, IMG_GetError());
 
     return img;
-}
+}*/
 
 void save_image(SDL_Surface *image_surface, char *path)
 {
@@ -115,16 +116,16 @@ void save_image(SDL_Surface *image_surface, char *path)
             SDL_GetError());
 }
 
-Image clone_image(Image *source)
+Image2 clone_image(Image2 *source)
 {
-    Image image;
+    Image2 image;
 
     image.height = source->height;
     image.width = source->width;
     image.average_color = source->average_color;
     image.surface = SDL_ConvertSurface(
         source->surface, source->surface->format, SDL_SWSURFACE);
-    image.pixels = malloc((image.width + 1) * sizeof(Pixel *));
+    image.pixels = malloc((image.width + 1) * sizeof(Pixel2 *));
 
     if (image.pixels == NULL)
     {
@@ -133,13 +134,13 @@ Image clone_image(Image *source)
 
     for (int x = 0; x < image.width; x++)
     {
-        image.pixels[x] = malloc((image.height + 1) * sizeof(Pixel));
+        image.pixels[x] = malloc((image.height + 1) * sizeof(Pixel2));
 
         for (int y = 0; y < image.height; y++)
         {
-            Pixel pSource = source->pixels[x][y];
+            Pixel2 pSource = source->pixels[x][y];
 
-            Pixel pDest = {pSource.r, pSource.g, pSource.b};
+            Pixel2 pDest = {pSource.r, pSource.g, pSource.b};
 
             image.pixels[x][y] = pDest;
         }
@@ -148,7 +149,7 @@ Image clone_image(Image *source)
     return image;
 }
 
-Image *crop_image(Image *input, square *crop)
+Image2 *crop_image(Image2 *input, square *crop)
 {
     point c1 = crop->c1;
     point c2 = crop->c2;
@@ -189,10 +190,10 @@ Image *crop_image(Image *input, square *crop)
 
     point start = c1;
 
-    printf("   ✂️ Cropping Image - Start: (%i, %i), Size: %i\n", start.x,
+    printf("   ✂️ Cropping Image2 - Start: (%i, %i), Size: %i\n", start.x,
         start.y, size);
 
-    Image *cropped = create_image(size, size);
+    Image2 *cropped = create_image(size, size);
     int old_x = start.x;
     old_x = old_x < 0 ? 0 : old_x;
 
@@ -203,7 +204,7 @@ Image *crop_image(Image *input, square *crop)
 
         for (int y = 0; y < size && old_y < input->height; y++, old_y++)
         {
-            Pixel old = input->pixels[old_x][old_y];
+            Pixel2 old = input->pixels[old_x][old_y];
             cropped->pixels[x][y] = old;
         }
     }
@@ -216,11 +217,11 @@ Image *crop_image(Image *input, square *crop)
  *
  * @param input
  * @param size
- * @return Image*
+ * @return Image2*
  */
-Image *downscale_image(Image *input, int size)
+Image2 *downscale_image(Image2 *input, int size)
 {
-    Image *downscaled = create_image(size, size);
+    Image2 *downscaled = create_image(size, size);
 
     int original_size = input->width;
     double downscale_factor = (double)original_size / (double)size;
@@ -251,7 +252,7 @@ Image *downscale_image(Image *input, int size)
 
             color /= pnum;
 
-            Pixel pix = {color, color, color};
+            Pixel2 pix = {color, color, color};
 
             downscaled->pixels[sx][sy] = pix;
 
@@ -264,30 +265,30 @@ Image *downscale_image(Image *input, int size)
     return downscaled;
 }
 
-Image SDL_Surface_to_Image(SDL_Surface *image_surface)
+Image2 SDL_Surface_to_Image2(SDL_Surface *image_surface)
 {
-    Image image;
+    Image2 image;
 
     image.height = image_surface->h;
     image.width = image_surface->w;
     image.surface = image_surface;
-    image.pixels = malloc((image.width + 1) * sizeof(Pixel *));
+    image.pixels = malloc((image.width + 1) * sizeof(Pixel2 *));
     image.average_color = 0;
 
     double pnum = image.width * image.height;
 
     if (image.pixels == NULL)
     {
-        errx(1, "Error when allocating memory in SDL_SurfaceToImage.");
+        errx(1, "Error when allocating memory in SDL_SurfaceToImage2.");
     }
 
     for (int x = 0; x < image.width; x++)
     {
-        image.pixels[x] = malloc((image.height + 1) * sizeof(Pixel));
+        image.pixels[x] = malloc((image.height + 1) * sizeof(Pixel2));
 
         if (image.pixels[x] == NULL)
         {
-            errx(1, "Error when allocating memory in SDL_SurfaceToImage.");
+            errx(1, "Error when allocating memory in SDL_SurfaceToImage2.");
         }
 
         SDL_Color values;
@@ -299,7 +300,7 @@ Image SDL_Surface_to_Image(SDL_Surface *image_surface)
             SDL_GetRGB(tpixel, image.surface->format, &values.r, &values.g,
                 &values.b);
 
-            Pixel pixel = {values.r, values.g, values.b};
+            Pixel2 pixel = {values.r, values.g, values.b};
 
             double c_avg = (values.r + values.g + values.b) / 3;
 
@@ -312,13 +313,13 @@ Image SDL_Surface_to_Image(SDL_Surface *image_surface)
     return image;
 }
 
-SDL_Surface *Image_to_SDL_Surface(Image *image)
+SDL_Surface *Image2_to_SDL_Surface(Image2 *image)
 {
     for (int x = 0; x < image->width; x++)
     {
         for (int y = 0; y < image->height; y++)
         {
-            Pixel p = image->pixels[x][y];
+            Pixel2 p = image->pixels[x][y];
 
             put_pixel(image->surface, x, y,
                 SDL_MapRGB(image->surface->format, p.r, p.g, p.b));
@@ -334,7 +335,7 @@ SDL_Surface *Image_to_SDL_Surface(Image *image)
  * @param source grayscale image
  * @return int*
  */
-int *Image_to_Array(Image *source)
+int *Image2_to_Array(Image2 *source)
 {
     int *out = malloc(sizeof(int) * source->width * source->height);
     int w = source->width, h = source->height;
@@ -357,7 +358,7 @@ int *Image_to_Array(Image *source)
  * @param container container image of size width * height
  * false
  */
-void Array_to_Image(int *array, Image *container)
+void Array_to_Image2(int *array, Image2 *container)
 {
     int w = container->width, h = container->height;
 
@@ -381,7 +382,7 @@ void Array_to_Image(int *array, Image *container)
         {
             double val = (array[x + y * w] / max) * (double)255;
 
-            Pixel pix = {val, val, val};
+            Pixel2 pix = {val, val, val};
             container->pixels[x][y] = pix;
         }
     }
@@ -393,11 +394,11 @@ void Array_to_Image(int *array, Image *container)
  * @param array
  * @param width
  * @param height
- * @return Image
+ * @return Image2
  */
-Image Array2D_to_Image(int **array, int width, int height)
+Image2 Array2D_to_Image2(int **array, int width, int height)
 {
-    Image image;
+    Image2 image;
     image.width = width;
     image.height = height;
     image.pixels = malloc(sizeof(int *) * width + 1);
@@ -432,7 +433,7 @@ Image Array2D_to_Image(int **array, int width, int height)
 
             pixel = 255 * (pixel - min) / (max - min);
 
-            Pixel pix = {pixel, pixel, pixel};
+            Pixel2 pix = {pixel, pixel, pixel};
 
             image.pixels[x][y] = pix;
         }
@@ -441,7 +442,7 @@ Image Array2D_to_Image(int **array, int width, int height)
     return image;
 }
 
-void free_Image(Image *image)
+void free_Image2(Image2 *image)
 {
     for (int i = 0; i < image->width; i++)
     {
@@ -453,7 +454,7 @@ void free_Image(Image *image)
     SDL_FreeSurface(image->surface);
 }
 
-void image_filter(Image *image, void (*filter)(Pixel *, int), double value)
+void image_filter(Image2 *image, void (*filter)(Pixel2 *, int), double value)
 {
     double pnum = image->width * image->height;
     image->average_color = 0;
@@ -473,7 +474,7 @@ void image_filter(Image *image, void (*filter)(Pixel *, int), double value)
     }
 }
 
-void image_partial_filter(Image *image, void (*filter)(Pixel *, int),
+void image_partial_filter(Image2 *image, void (*filter)(Pixel2 *, int),
     double value, int startx, int endx, int starty, int endy)
 {
     for (int x = startx; x < endx && x < image->width; x++)
@@ -497,7 +498,7 @@ void image_partial_filter(Image *image, void (*filter)(Pixel *, int),
  * @return int*
  */
 int *image_grayscale_histogram(
-    Image *image, int startx, int endx, int starty, int endy)
+    Image2 *image, int startx, int endx, int starty, int endy)
 {
     int *hist = calloc(sizeof(int), 256);
 
@@ -574,10 +575,10 @@ int get_histogram_max(int *hist)
  * @return int** coordinates at which the line actually started and ended
  * (within the bound of the image).
  */
-int *draw_line(Image *image, int w, int h, int x0, int y0, int x1, int y1,
+int *draw_line(Image2 *image, int w, int h, int x0, int y0, int x1, int y1,
     Uint8 r, Uint8 g, Uint8 b)
 {
-    Pixel color = {r, g, b};
+    Pixel2 color = {r, g, b};
     int *coordinates = malloc(sizeof(int) * 4 + 1);
     memset(coordinates, -1, sizeof(int) * 4);
 
@@ -634,7 +635,7 @@ int *draw_line(Image *image, int w, int h, int x0, int y0, int x1, int y1,
  * @param g
  * @param b
  */
-void draw_square(Image *image, square *sqr, int r, int g, int b)
+void draw_square(Image2 *image, square *sqr, int r, int g, int b)
 {
     free(draw_line(image, image->width, image->height, sqr->c1.x, sqr->c1.y,
         sqr->c2.x, sqr->c2.y, r, g, b));
