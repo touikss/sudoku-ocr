@@ -345,6 +345,12 @@ SDL_Surface* draw_sudoku_grid(SDL_Surface* surface, int sudoku_grid[][16], int s
         //printf("Police chargée avec succès\n");
     }
 
+    /*char cwd[1024];
+
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        printf("Répertoire actuel : %s\n", cwd);
+    }*/
+
     TTF_Font* font = TTF_OpenFont("res/font.ttf", 20);
     if (font == NULL) {
         // Gestion de l'erreur
@@ -414,6 +420,10 @@ SDL_Surface* draw_sudoku_grid(SDL_Surface* surface, int sudoku_grid[][16], int s
     TTF_CloseFont(font);
     TTF_Quit();
     return surface;
+}
+
+int max(int a, int b) {
+    return (a > b) ? a : b;
 }
 
 
@@ -570,9 +580,8 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
 
     Matrix_Print(matrice);
 
-
-    int hm = Matrix_Height(matrice);
     int wm = Matrix_Width(matrice);
+    int hm = Matrix_Height(matrice);
 
     if ((hm == 9 || hm == 16) && (wm == 9 || wm == 16)){
         Matrix_EstimateCase(matrice);
@@ -666,6 +675,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
 
                     Image caseImage = Image_Crop(&origin, &rect);
 
+                    
                     //ApplyPreProcess(&caseImage, bestFilter, 1, CASE);
 
                     Image_UpdateHistogram(&caseImage);
@@ -676,14 +686,30 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                     //Image_ContrastFilter(&caseImage, 1.2, 80, 100, 40);  
 
                     Image resized = Image_Resize28(&caseImage);
-                    Image_Invert(&resized);
                     Image copy = Image_Copy(&resized);
+                    Image_Invert(&copy);
                     ShapeTab* tab = ShapeTab_Create(3);
                     Image_HighPassFilter(&copy, 150);
                     Image_LabelComponent(&copy, tab);
+                    Image_ThresholdFilter(&resized, 100);
+                    //Image_ThresholdFilter(&resized, 100);
+                    //Image_Invert(&resized);
 
-                    if (tab->size > 0)
+                    if (tab->size > 0){
+                        Shape* shape = tab->data->next;
+                        SDL_Rect rec;
+                        int s = max(shape->extremum[1] - shape->extremum[0], shape->extremum[3] - shape->extremum[2]) + 6;
+                        rec.w = s;
+                        rec.h = s;
+                        rec.x = shape->averageX - s /2;
+                        rec.y = shape->averageY - s /2;
+                        if (1 == 0){
+                        Image num = Image_Crop(&resized, &rec);
+                        Image fin = Image_Resize28(&num);
+                        Image_HighPassFilter(&fin, 1);
+                        Image_Save(&fin, path);}
                         Image_Save(&resized, path);
+                    }
                     //int thresh = 200;
 
                     //Image_ThresholdFilter(&copy, thresh);

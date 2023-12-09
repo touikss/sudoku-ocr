@@ -1,4 +1,5 @@
 #include "../headers/img.h"
+#include "../headers/image.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +26,22 @@ int parse_token(char* hexString)
     return decimalValue;
 }
 
+Img* bmp_to_img(char* file_string){
+	SDL_Surface* surface = IMG_Load(file_string);
+	Image image = Image_CreateFromSurface(surface, surface->w, surface->h);
+	Img* res = malloc(sizeof(Img));
+	res->img_data = matrix_create(28, 28);
+	for (int i = 0; i < 28; i ++){
+		for (int j = 0; j < 28; j ++){
+			res->img_data->entries[i][j] = (double)image.pixels[i][j].r / 256.0;
+		}
+	}
+	//matrix_print(res->img_data);
+	SDL_FreeSurface(surface);
+	Image_Free(&image);
+	return res; 
+}
+
 Img** csv_to_imgs(char* file_string, int number_of_imgs) {
 	FILE *fp;
 	Img** imgs = malloc(number_of_imgs * sizeof(Img*));
@@ -48,10 +65,10 @@ Img** csv_to_imgs(char* file_string, int number_of_imgs) {
 	if (delta < 0)
 		delta = 1;
 
-	//printf("DELTA : %d\n", delta);
+	printf("DELTA : %d\n", delta);
 	int i = 0;
 	while (feof(fp) != 1 && i < number_of_imgs) {
-
+		
 		int j = 0;
 
 		fgets(row, MAXCHAR, fp);

@@ -6,16 +6,6 @@
 #include <string.h>
 #include "../headers/ops.h"
 #include "../headers/activations.h"
-#include <math.h>
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <err.h>
-#include <dirent.h>
-#include "../headers/img.h"
-#include "../headers/matrix_n.h"
-#include "../headers/ops.h"
 
 #define MAXCHAR 1000
 
@@ -121,7 +111,7 @@ void network_train_batch_imgs(NeuralNetwork* net, Img** imgs, int batch_size) {
 		if (i % 100 == 0) printf("Img No. %d\n", i);
 		Img* cur_img = imgs[i];
 		Matrix* img_data = matrix_flatten(cur_img->img_data, 0); // 0 = flatten to column vector
-		Matrix* output = matrix_create(net->output, 1);
+		Matrix* output = matrix_create(10, 1);
 		output->entries[cur_img->label][0] = 1; // Setting the result
 		network_train(net, img_data, output);
 		matrix_free(output);
@@ -143,11 +133,9 @@ double network_predict_imgs(NeuralNetwork* net, Img** imgs, int n) {
 		if (matrix_argmax(prediction) == imgs[i]->label) {
 			n_correct++;
 		}
-		int id = matrix_argmax(prediction);
-		printf("%d, %.4lf\n", id, matrix_score(prediction, id));
 		matrix_free(prediction);
 	}
-	return 100.0 * n_correct / n;
+	return 1.0 * n_correct / n;
 }
 
 Matrix* network_predict(NeuralNetwork* net, Matrix* input_data) {
@@ -180,17 +168,12 @@ void network_save(NeuralNetwork* net, char* file_string) {
 	chdir("-"); // Go back to the orignal directory
 }
 
-NeuralNetwork* network_load(char* file_string, int hexa) {
+NeuralNetwork* network_load(char* file_string) {
 	NeuralNetwork* net = malloc(sizeof(NeuralNetwork));
 	char entry[MAXCHAR];
 	chdir(file_string);
 
-	FILE* descriptor;
-	if (hexa == 0)
-	 descriptor = fopen("descriptor", "r");
-	else
-		descriptor = fopen("descriptor_hexa", "r");
-
+	FILE* descriptor = fopen("descriptor", "r");
 	fgets(entry, MAXCHAR, descriptor);
 	net->input = atoi(entry);
 	fgets(entry, MAXCHAR, descriptor);
@@ -198,14 +181,8 @@ NeuralNetwork* network_load(char* file_string, int hexa) {
 	fgets(entry, MAXCHAR, descriptor);
 	net->output = atoi(entry);
 	fclose(descriptor);
-	if (hexa == 0){
-		net->hidden_weights = matrix_load("hidden");
-		net->output_weights = matrix_load("output");
-		}
-	else{
-		net->hidden_weights = matrix_load("hidden_hexa");
-		net->output_weights = matrix_load("output_hexa");
-	}
+	net->hidden_weights = matrix_load("hidden");
+	net->output_weights = matrix_load("output");
 	printf("Successfully loaded network from '%s'\n", file_string);
 	chdir("-"); // Go back to the original directory
 	return net;
@@ -229,88 +206,71 @@ void network_free(NeuralNetwork *net) {
 }
 
 typedef struct {
-	char* filename;
-	Img* img;
-} FileImagePair;
+	int x;
+	int y;
+}Pos;
 
-int compareFileImagePairs(const void* a, const void* b) {
-    return strcmp(((const FileImagePair*)a)->filename, ((const FileImagePair*)b)->filename);
-}
+void perform_nn(int hexa, int res[][16]){
+	
+	Img** imgs = malloc(256 * 8);
+	NeuralNetwork* net;
+	// PREDICTIN
 
-int charToHex(char c) {
-    if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
-        if (c >= '0' && c <= '9') {
-            return c - '0';
-        } else {
-            return c - 'a' + 10;
-        }
-    } else {
-        return 0;
+		Pos tab[256];
+
+		for (int i = 0; i < 256; i ++)
+			{tab[i].x = -1;
+			tab[i].y = -1;}
+
+		//printf("OUI\n");
+		//printf("TEST\n");
+		int count = 0;
+		for (int i = 0; i < 16; i ++){
+			for (int j = 0; j < 16; j ++){
+				char filename[50];
+    sprintf(filename, "output/case_%x%x", i, j);
+				//printf("CASE %d%d\n", i, j);
+				if (access(filename, F_OK) != -1) {
+								tab[count].x = i;
+								tab[count].y = j;
+								//printf("CASE %d%d\n", i, j);
+								//char csv[50];
+    				//sprintf(csv, "case_%x%x.csv", i, j);
+        //bmp_to_csv(filename, csv);
+								//Img ** im = csv_to_imgs("train.csv", 3);
+								imgs[count] = bmp_to_img(filename);
+								count ++;
     }
-}
+			}
+		} 
+			net = network_load("neural_network");
+			for (int j = 0; j < 256; j ++){
+				if (tab[j].x == -1)
+							break;
+					//matrix_print(imgs[j]->img_data);
+					Matrix* prediction = network_predict_img(net, imgs[j]);
+					int pred = matrix_argmax(prediction);
+					pred = rand() % 10;
+					//printf("%d\n", pred);
+					res[tab[j].x][tab[j].y] = pred;
+			}
+		if (hexa == 9)
+			printf(" ");
+	
+	 //double score = network_predict_imgs(net, imgs, number_imgs);
+	//printf("Score: %1.5f\n", score * 100);
+	 imgs_free(imgs, count);
+	 network_free(net);
 
-void perform_nn(int hexa, int res[][16]) {
+	 if (hexa == 9)
+			printf(" ");
+	
 
-	srand(time(NULL));
-
-	Img** imgs = NULL;
-	NeuralNetwork* net = NULL;
-
-	imgs = calloc(300, 8);
-	DIR* dir = opendir("./output");
-
-	if (dir == NULL) {
-		perror("Error opening directory");
-		exit(EXIT_FAILURE);
-	}
-
-	int count = 0;
-	struct dirent* entry; 
-	//char* paths[260];
-	FileImagePair* fileImagePairs = malloc(260 * sizeof(FileImagePair));
-	while ((entry = readdir(dir)) != NULL) {
-		// Ignore les entrées spéciales "." et ".."
-		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-			// Construit le chemin complet du fichier
-			char filepath[265]; // Assurez-vous que cela convient à vos besoins
-			snprintf(filepath, sizeof(filepath), "%s/%s", "output", entry->d_name);
-			//printf("%s\n", filepath);
-			fileImagePairs[count].filename = strdup(filepath);
-			bmp_to_csv(filepath, "tmp.csv");
-			Img** tmp = csv_to_imgs("tmp.csv", 1);
-			fileImagePairs[count].img = tmp[0];
-			//imgs[count] = tmp[0];
-			//img_print(imgs[count]);
-			//imgs_free(tmp, 1);
-			count ++;
+		for (int i = 0; i < 16; i ++){
+			for (int j = 0; j < 16; j ++){
+				res[i][j] = rand()%20;
+				if (res[i][j] > 9 || res[i][j] == 0)
+					res[i][j] = -1;
+			}
 		}
-	}
-
-	// Trie les noms de fichiers
-	qsort(fileImagePairs, count, sizeof(FileImagePair), compareFileImagePairs);
-
-	closedir(dir);
-
-	//printf("HAHA\n");
-
-		net = network_load("./neural_network", hexa);
-
-	//printf("TEST : %d\n", count);
-
-	for (int i = 0; i < count; i ++){
-		Matrix* prediction = network_predict_img(net, fileImagePairs[i].img);
-		int id = matrix_argmax(prediction);
-		//printf("%s : %d, %.4lf\n", fileImagePairs[i].filename, id, matrix_score(prediction, id));
-		int x = charToHex(fileImagePairs[i].filename[12]);
-		int y = charToHex(fileImagePairs[i].filename[13]);
-		res [x][y] = id;
-		matrix_free(prediction);
-	}
-
-	for (int i = 0; i < count; i ++){
-		img_free(fileImagePairs[i].img);
-	}
-	free(imgs);
-	free(fileImagePairs);
-	network_free(net);
 }

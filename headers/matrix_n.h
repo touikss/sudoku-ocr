@@ -16,4 +16,3 @@ Matrix* matrix_load(char* file_string);
 void matrix_randomize(Matrix* m, int n);
 int matrix_argmax(Matrix* m);
 Matrix* matrix_flatten(Matrix* m, int axis);
-double matrix_score(Matrix* m, int id);

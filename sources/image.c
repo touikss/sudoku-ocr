@@ -578,7 +578,6 @@ void Image_Invert(Image* image)
 
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
-            // Si le pixel n'a pas encore été visité et est blanc
             int val = 255 - image->pixels[x][y].r;
             image->pixels[x][y].r = val;
             image->pixels[x][y].g = val;

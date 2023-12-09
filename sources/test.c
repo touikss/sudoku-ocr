@@ -681,9 +681,7 @@ void ocr(GtkWidget *_, gpointer data)
 
     perform_nn(hexa, mat);
 
-
     *main_window->images->current_image = SDL_Surface_to_Image2(IMG_Load("../tmp/croped"));
-
 
     set_step(main_window->step_indicators, 5);
 
@@ -873,12 +871,12 @@ void sudoku(GtkWidget *_, gpointer data){
     char buffer[4096];  // Vous pouvez ajuster la taille du tampon selon vos besoins
 
     if (getcwd(buffer, sizeof(buffer)) != NULL) {
-        printf("Le répertoire de travail actuel est : %s\n", buffer);
+        //printf("Le répertoire de travail actuel est : %s\n", buffer);
     } else {
         perror("getcwd() a échoué");
     }
 
-
+    strcat(buffer, "SudokuSolver");
     int solved = 0;
     if (hexa == 0){
         int** sud = createSudokuFromHexa(mat);
