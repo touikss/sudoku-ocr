@@ -807,57 +807,61 @@ char** createCharMatrixFromIntMatrix(int mat[][16]){
 }
 
 int gridIsValidHexa(char** grid){
-    int* tab = malloc(16 * sizeof(int));
-    
-    for (int i = 0; i < 16; i ++){
-        for (int j = 0; j < 16; j ++){
-            tab[j] = 0;
-        }
-        for (int j = 0; j < 16; j ++){
-            if (grid[i][j] != 'X'){
-                if (tab[grid[i][j] - 1] == 1){
-                    return 0;
-                }
-                else{
-                    tab[grid[i][j] - 1] = 1;
-                }
-            }
-        }
-    }
-    
-    for (int i = 0; i < 16; i ++){
-        for (int j = 0; j < 16; j ++){
-            tab[j] = 0;
-        }
-        for (int j = 0; j < 16; j ++){
-            if (grid[j][i] != 'X'){
-                if (tab[grid[j][i] - 1] == 1){
-                    return 0;
-                }
-                else{
-                    tab[grid[j][i] - 1] = 1;
+    int row, col, i, j;
+
+    // Vérifier les lignes
+    for (row = 0; row < 16; row++) {
+        int used[16] = {0};
+        for (col = 0; col < 16; col++) {
+            char current = grid[row][col];
+            if (current != 'X') {
+                int index = (current >= 'A') ? (current - 'A' + 10) : (current - '0');
+                if (used[index]) {
+                    return 0;  // Le chiffre est déjà utilisé dans la ligne
+                } else {
+                    used[index] = 1;
                 }
             }
         }
     }
-    for (int i = 0; i < 16; i += 4){
-        for (int j = 0; j < 16; j += 4){
-            for (int k = 0; k < 16; k ++){
-                tab[k] = 0;
+
+    // Vérifier les colonnes
+    for (col = 0; col < 16; col++) {
+        int used[16] = {0};
+        for (row = 0; row < 16; row++) {
+            char current = grid[row][col];
+            if (current != 'X') {
+                int index = (current >= 'A') ? (current - 'A' + 10) : (current - '0');
+                if (used[index]) {
+                    return 0;  // Le chiffre est déjà utilisé dans la colonne
+                } else {
+                    used[index] = 1;
+                }
             }
-            for (int k = 0; k < 16; k ++){
-                if (grid[i + k / 4][j + k % 4] != 'X'){
-                    if (tab[grid[i + k / 4][j + k % 4] - 1] == 1){
-                        return 0;
+        }
+    }
+
+    // Vérifier les blocs 4x4
+    for (i = 0; i < 16; i += 4) {
+        for (j = 0; j < 16; j += 4) {
+            int used[16] = {0};
+            for (row = 0; row < 4; row++) {
+                for (col = 0; col < 4; col++) {
+                    char current = grid[i + row][j + col];
+                    if (current != 'X') {
+                        int index = (current >= 'A') ? (current - 'A' + 10) : (current - '0');
+                        if (used[index]) {
+                            return 0;  // Le chiffre est déjà utilisé dans le bloc
+                        } else {
+                            used[index] = 1;
+                        }
                     }
-                    else{
-                        tab[grid[i + k / 4][j + k % 4] - 1] = 1;
-                    }
                 }
             }
         }
     }
-    return 1;
+
+    return 1;  // La grille est valide
 }
 
 void sudoku(GtkWidget *_, gpointer data){
@@ -897,7 +901,6 @@ void sudoku(GtkWidget *_, gpointer data){
         char** sud = createCharMatrixFromIntMatrix(mat);
         dispBoard(sud);
         if(gridIsValidHexa(sud)) {
-            sud[0][0] = 'F';
             solved = !suducul(sud);
             dispBoard(sud);
             for (int i = 0; i < 16; i ++){

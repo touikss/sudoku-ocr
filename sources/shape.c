@@ -255,13 +255,13 @@ void Shape_UpdateIsSquare(Shape* shape)
     double dist76 = Point_Distance(shape->descriptor[7], shape->descriptor[6]); // haut droite haut gauche
     double dist64 = Point_Distance(shape->descriptor[6], shape->descriptor[4]); // bas gauche haut gauche
     
-    int tiltedSquare = AreEquals(dist02, dist13, dist21, dist30, 0.13); // 1 si il est penché et que c'est un carré
+    int tiltedSquare = AreEquals(dist02, dist13, dist21, dist30, 00.13); // 1 si il est penché et que c'est un carré
     int normalSquare = AreEquals(dist45, dist57, dist64, dist76, 0.13); // 1 si il est pas penché et que c'est un carré
 
     if (tiltedSquare || normalSquare)
         shape->isSquare = 1;
 
-    if (shape->height < 28 || shape->width < 28)
+    if (shape->height < 28 || shape->width < 28 || shape->size < 500)
         shape->isSquare = 0;
 
     shape->isTilted = tiltedSquare;

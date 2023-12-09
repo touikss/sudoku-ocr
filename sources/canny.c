@@ -40,6 +40,9 @@ void deleteFilesInDirectory(const char *directoryPath) {
 
 void ApplyPreProcess(Image* image, int smooth, int type, int image_type)
 {
+    if (image_type == 10009090)
+        printf("wsh");
+
     int windowsSize = smooth;
 
     char* path = (char*)calloc(100, 8);
@@ -48,38 +51,33 @@ void ApplyPreProcess(Image* image, int smooth, int type, int image_type)
     if (type == 1){
         Image_SmoothHistogram(image, windowsSize);
         Image_EqualizeHistogram(image);
+        
         Image_Save(image, path);
-        if (image_type == GRID){
-            SobelEdgeDetection(image, 80);
-            snprintf(path, 100, "tmp/sobel_type_%d_wsize_%d", type, windowsSize);
-            Image_ErodeEdges(image); 
-            Image_DilateEdges(image, 1);
-        }
-        if (image_type == GRID)
-            Image_GaussianFilter(image, 3);
+        
+        SobelEdgeDetection(image, 80);
+        snprintf(path, 100, "tmp/sobel_type_%d_wsize_%d", type, windowsSize);
+        
+        Image_ErodeEdges(image); 
+        Image_DilateEdges(image, 1);
+        Image_GaussianFilter(image, 3);
         Image_Invert(image);
         Image_ThresholdFilter(image, 200);
         Image_Save(image, path);
     }
     else if (type == 2){
         Image_NormalizeHistogram(image);
-        Image_Levelize(image, smooth / 10 + 5);
+        Image_Levelize(image, smooth / 10);
 
         Image_Save(image, path);
-        
-        if (image_type == GRID)
-            SobelEdgeDetection(image, 1);
+        SobelEdgeDetection(image, 1);
 
         snprintf(path, 100, "tmp/sobel_type_%d_wsize_%d", type, windowsSize);
         Image_Save(image, path);
         Image_ThresholdFilter(image, 2);
         Image_Invert(image);
-        if (image_type == GRID){
-            Image_DilateEdges(image, 1);
-            Image_DilateEdges(image, 4);
-        }
-        if (image_type == GRID)
-            Image_GaussianFilter(image, 3);
+        Image_DilateEdges(image, 1);
+        Image_DilateEdges(image, 4);
+        Image_GaussianFilter(image, 3);
         Image_Invert(image);
         Image_ThresholdFilter(image, 130);
     }
@@ -713,6 +711,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
     printf("ITERAION = %d\n", iteration);
     printf("FOUND = %s\n", detected? "YES" : "NO");
     printf("HEXA = %s\n", hexa? "YES" : "NO");
+
     SDL_Rect rect;
     if (hexa == 0){
         rect.w = abs((int)matrice[0][8]->extremum[1] - (int)matrice[8][0]->extremum[0]);
@@ -723,16 +722,16 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         rect.h = abs((int)matrice[15][15]->extremum[3] - (int)matrice[0][0]->extremum[2]);
     }
 
-    rect.w = (rect.w + 100);
-    rect.h = (rect.h + 100);
+    rect.w = (rect.w + 50);
+    rect.h = (rect.h + 50);
     
     Shape_ComputeDescriptors(matrice[0][0]);
     Shape_ComputeDescriptors(matrice[0][8]);
 
     rect.y = matrice[0][0]->extremum[2];
     rect.x = matrice[8][0]->extremum[0];
-    rect.y = abs(rect.y - 50);
-    rect.x = abs(rect.x - 50);
+    rect.y = abs(rect.y - 10);
+    rect.x = abs(rect.x - 10);
 
     if (rect.x + rect.w >= (int)rese.width)
         rect.w = rese.width - rect.x - 5;

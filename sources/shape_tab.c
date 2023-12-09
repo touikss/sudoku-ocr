@@ -322,6 +322,10 @@ void ShapeTab_RemoveInconsistency(ShapeTab* tab, Shape* grid, double factor)
     ShapeTab_ComputeAverage(tab, grid);
     ShapeTab_ComputeStandardDeviation(tab, grid);
 
+    ShapeTab_UpdateCountSquaresAndTilted(tab);
+
+    int tilted = tab->tiltedShapes > 10;
+
     for(Shape* current = tab->data->next; current;){
         Shape* tmp = current;
         current = current->next;
@@ -330,7 +334,7 @@ void ShapeTab_RemoveInconsistency(ShapeTab* tab, Shape* grid, double factor)
     
         double dw = fabs((double)tmp->width - tab->averageW) / tab->averageW * 100;
         double dh = fabs((double)tmp->height - tab->averageH) / tab->averageH * 100;
-        if (dw > 10 + factor * tab->stdW || dh > 10 + factor * tab->stdH){
+        if (dw > 10 + factor * tab->stdW || dh > 10 + factor * tab->stdH || tmp->isTilted != tilted){
             ShapeTab_RemoveShape(tab, tmp, 1);  
         }
     }
