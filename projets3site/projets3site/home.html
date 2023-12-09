@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" type="text/css" href="image-police/police_proxymanalysis">
+    <title>Accueil</title>
+</head>
+<body>
+
+    <nav class="menu_nav">
+        <form id="logoutForm" action="includes/logout.php" method="post">
+            <input type="hidden" name="logout" value="1">
+            <button id="deconnectButton" type="submit">
+                <img src="image-police/deconnect.png" alt="Deconnect">
+            </button>
+        </form>
+        <ul>
+            <li class="btn">
+                <a href="home.html">
+                    Accueil
+                </a>
+            </li>
+            <li class="btn">
+                <a href="presentation.html">
+                    Presentation
+                </a>
+            </li>
+            <li class="btn">
+                <a href="groupe.html">
+                    Groupe
+                </a>
+            </li>
+        </ul>
+
+    </nav>
+    <div class="titre">
+        <ul>
+            <li>O</li>
+            <li>C</li>
+            <li>R</li>
+            <li>-</li>
+            <li>S</li>
+            <li>U</li>
+            <li>D</li>
+            <li>O</li>
+            <li>K</li>
+            <li>U</li>
+        </ul>
+    </div>
+<br><br><br><br><br>
+<div style="padding-bottom: 0px;"><img style=" width: 50%; top: 100px;"src="https://media2.giphy.com/media/XD9o33QG9BoMis7iM4/200w.webp?cid=ecf05e47wpniezptwq0kfyzv1xim6wvw4odord8ndh7zwitn&ep=v1_gifs_search&rid=200w.webp&ct=g"></div>
+
+
+    <div id="star-container">
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+    </div>
+
+
+
+
+
+    <script type="text/javascript">
+        const starContainer = document.getElementById("star-container");
+        const stars = document.getElementsByClassName("star");
+
+        for (let i = 0; i < stars.length; i++) {
+            stars[i].style.top = `${Math.random() * 100}%`;
+            stars[i].style.left = `${Math.random() * 100}%`;
+            stars[i].style.animationDelay = `${Math.random() * 20}s`;
+            stars[i].addEventListener("animationiteration", () => {
+                stars[i].style.top = `${Math.random() * 100}%`;
+                stars[i].style.left = `${Math.random() * 100}%`;
+            });
+        }
+    </script>
+    <script type="text/javascript">
+
+
+        var xhr = new XMLHttpRequest();
+        var url = $url1;
+
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+
+        var data = {
+            // Les données que vous souhaitez envoyer
+            email: $_SESSION['email'],
+            password: $_SESSION['password']
+        };
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                // Traitement de la réponse de votre application ASP.NET
+                var response = JSON.parse(xhr.responseText);
+                // Faire quelque chose avec la réponse...
+            }
+        };
+
+        xhr.send(JSON.stringify(data));
+    </script>
+</body>
+</html>

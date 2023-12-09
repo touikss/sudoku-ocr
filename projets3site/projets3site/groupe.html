@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<link rel="stylesheet" type="text/css" href="image-police/police_proxymanalysis">
+	<title>Groupe</title>
+</head>
+<body style="overflow: auto;">
+<nav class="menu_nav">
+        <form id="logoutForm" action="includes/logout.php" method="post">
+            <input type="hidden" name="logout" value="1">
+            <button id="deconnectButton" type="submit">
+                <img src="image-police/deconnect.png" alt="Deconnect">
+            </button>
+        </form>
+        <ul>
+            <li class="btn">
+                <a href="home.html">
+                    Accueil
+                </a>
+            </li>
+            <li class="btn">
+                <a href="presentation.html">
+                    Presentation
+                </a>
+            </li>
+            <li class="btn">
+                <a href="groupe.html">
+                    Groupe
+                </a>
+            </li>
+        </ul>
+
+    </nav>
+    <div class="pres" style="overflow: auto;">
+        <p>Comme vous pouvez le voir sur la photo très légérement retouché, ci-dessous, notre groupe est composé de 4 personnes. De gauche à droite, Emile Boisard, Bonnefont Arthur, Théodore Deguest et Bonefont Thibaut.</p>
+    </div>
+    <div><img style="overflow: auto;" style="width:10%;"class="im" src="image-police/pres.png"><img>
+    </div>
+    <div id="star-container">
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+	
+	<div id="star-container">
+  		<div class="star"></div>
+ 		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+ 		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+	</div>
+	<script type="text/javascript">
+		const starContainer = document.getElementById("star-container");
+		const stars = document.getElementsByClassName("star");
+
+		for (let i = 0; i < stars.length; i++) {
+  			stars[i].style.top = `${Math.random() * 100}%`;
+  			stars[i].style.left = `${Math.random() * 100}%`;
+  			stars[i].style.animationDelay = `${Math.random() * 20}s`;
+  			stars[i].addEventListener("animationiteration", () => {
+    			stars[i].style.top = `${Math.random() * 100}%`;
+    			stars[i].style.left = `${Math.random() * 100}%`;
+  			});
+		}
+	</script>
+	
+<div id="stars"></div>
+
+<script>
+    function createStar() {
+        const star = document.createElement('div');
+        star.classList.add('stars');
+
+        const trail = document.createElement('div');
+        trail.classList.add('trail');
+
+        const size = Math.random() * 5 + 2;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        trail.style.width = size + 'px';
+        trail.style.height = size + 'px';
+
+        const angle = Math.random() * 360;
+        const speed = Math.random() * 2 + 1;
+        const trailDuration = Math.random() * 0.5 + 0.3;
+        const delay = Math.random() * 5;
+
+        star.style.left = Math.random() * window.innerWidth + 'px';
+        star.style.top = Math.random() * window.innerHeight + 'px';
+        star.style.animation = `shootingStar ${speed}s linear ${delay}s infinite`;
+        star.style.transform = `rotate(${angle}deg)`;
+        trail.style.animation = `fadeTrail ${trailDuration}s linear ${delay}s infinite`;
+
+        document.getElementById('stars').appendChild(star);
+        star.appendChild(trail);
+
+        setTimeout(() => {
+            star.remove();
+        }, (speed + delay) * 1000);
+    }
+
+    setInterval(createStar, 300);
+</script>
+</body>
+</html>
