@@ -9,6 +9,7 @@
 #include <string.h>
 #include "../headers/solver_hexa.h"
 #include "../headers/solver.h"
+//#include <pango/pangofont.h>
 
 #define IMAGE_SIZE 500
 #define VERBOSE_MODE 0
@@ -319,11 +320,14 @@ void cancel_image_selection(GtkWidget *_, gpointer data)
     MainWindow *main_window = (MainWindow *)data;
 
     set_page(main_window, "page1");
+
+    if (_ == NULL)
+        printf(" ");
 }
 
 gboolean grid_detection_finished(gpointer data)
 {
-    printf("grid_detection_finished\n");
+    //printf("grid_detection_finished\n");
     MainWindow *main_window = (MainWindow *)data;
 
     main_window->images->is_grid_detected = TRUE;
@@ -389,6 +393,9 @@ void process_image(GtkWidget *_, gpointer data)
 
     g_thread_new("grid_detection_handler", (GThreadFunc)grid_detection_handler,
                  main_window);
+
+    if (_ == NULL)
+        printf(" ");
 }
 
 void manual_rotate_image(GtkWidget *widget, gpointer data)
@@ -435,6 +442,9 @@ void rotation_gauche(GtkWidget *_, gpointer data)
     display_images(GTK_DRAWING_AREA(main_window->pages->page3->image),
                   main_window->images->image_rotated, main_window);
 
+    if (_ == NULL)
+        printf(" ");
+
 }
 
 void rotation_droite(GtkWidget *_, gpointer data)
@@ -454,6 +464,9 @@ void rotation_droite(GtkWidget *_, gpointer data)
     rotateScale -= M_PI_2;
     display_images(GTK_DRAWING_AREA(main_window->pages->page3->image),
                   main_window->images->image_rotated, main_window);
+
+    if (_ == NULL)
+        printf(" ");
 }
 
 void window_destroy(GtkWidget *_, gpointer data)
@@ -482,6 +495,12 @@ void window_destroy(GtkWidget *_, gpointer data)
     free(main_window->images->current_container);*/
 
     gtk_main_quit();
+
+    if (data == NULL)
+        printf(" ");
+
+    if (_ == NULL)
+        printf(" ");
 }
 
 void set_sudoku_values(GtkWidget *grid, int sudokuValues[16][16], int hexa) {
@@ -507,7 +526,7 @@ void set_sudoku_values(GtkWidget *grid, int sudokuValues[16][16], int hexa) {
                 gchar *text = g_strdup_printf("%x", value);
 
                 if (value == -1) {
-                        text = g_strdup(" ");
+                        text = g_strdup("");
                 } else {
                         text = g_strdup_printf("%X", value);
                 }
@@ -521,67 +540,24 @@ void set_sudoku_values(GtkWidget *grid, int sudokuValues[16][16], int hexa) {
     }
 }
 
-void ocr(GtkWidget *_, gpointer data)
-{
-    MainWindow *main_window = (MainWindow *)data;
-
-    hexa = verifieEtSupprime("./tmp/hexa.txt");
-    printf("HEXA = %d\n", hexa);
-
-    
-    for (int i = 0; i < 16; i++) {
-        for (int j = 0; j < 16; j++) {
-            mat[i][j] = -1;
-        }
-    }
-
-    perform_nn(!hexa, mat);
-
-    for (int i = 0; i < 16; i ++){
-        for (int j = 0; j < 16; j ++){
-            if (mat[i][j] < 0)
-                printf("  |");
-            else
-                printf("%2d|", mat[i][j]);
-        }
-        printf("\n");
-    }
-
-    *main_window->images->current_image = SDL_Surface_to_Image2(IMG_Load("../../tmp/croped"));
-
-    set_step(main_window->step_indicators, 5);
-
-    set_page(main_window, "page5");
-
-    GList *child = gtk_container_get_children(GTK_VIEWPORT(main_window->pages->page5->container));
-
-        // Accéder au premier enfant
-    GtkWidget *box = GTK_WIDGET(child->data);
-
-    // Obtenez la liste des enfants du conteneur (box)
-    GList *children = gtk_container_get_children(GTK_CONTAINER(box));
-
-        // Vérifiez si la liste n'est pas vide
-    GtkWidget *cont = GTK_WIDGET(children->data);
-
-        // N'oubliez pas de libérer la liste des enfants
-    g_list_free(child);
-    g_list_free(children);
-
-    GtkWidget *grid = gtk_grid_new();
-     // Ajoutez la nouvelle grille à la fenêtre principale
-    gtk_container_add(GTK_CONTAINER(cont), grid);
-
-    create_sudoku_grid(grid, hexa);
-
-    set_sudoku_values(grid, mat, hexa);
-
-    gtk_widget_show_all(main_window->window);
-}
+typedef struct {
+    int i;
+    int j;
+} EntryIndices;
 
 void on_entry_changed(GtkWidget *entry, gpointer user_data) {
     const gchar *text = gtk_entry_get_text(GTK_ENTRY(entry));
-    //g_print("Label de la case : %s\n", text);
+
+    // Récupérer la structure EntryIndices depuis l'entrée
+    EntryIndices *indices = g_object_get_data(G_OBJECT(entry), "entry_indices");
+    if (indices != NULL) {
+        g_print("Label de la case : %s, %d, %d\n", text, indices->i, indices->j);
+        int val = 0;
+        sscanf(text, "%X", &val);
+        mat[indices->i][indices->j] = val;
+    }
+    if (entry == NULL || user_data)
+        printf(" ");
 }
 
 void clear_grid(GtkWidget *grid) {
@@ -623,34 +599,26 @@ void create_sudoku_grid(GtkWidget *grid, int hexa) {
             GtkWidget *entry = gtk_entry_new();
             gtk_entry_set_width_chars(GTK_ENTRY(entry), 1);
             gtk_entry_set_max_length(GTK_ENTRY(entry), 1);
-            //gtk_widget_set_hexpand(entry, TRUE);
-            //gtk_widget_set_vexpand(entry, TRUE);
 
-            // Définir une taille fixe pour chaque case
-            //gtk_widget_set_size_request(entry, 35, 35);
+            const gchar *css = "entry { font: 18px Arial; }";  // 12 est la taille, Arial est la police
+            GtkCssProvider *provider = gtk_css_provider_new();
+            gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider), css, -1, NULL);
+            gtk_style_context_add_provider(gtk_widget_get_style_context(entry),
+                                            GTK_STYLE_PROVIDER(provider),
+                                            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+            g_object_unref(provider);
 
-           // Changer la taille de la police
-            PangoFontDescription *font_desc = pango_font_description_from_string("Arial 12"); // "Arial" est la police et 12 est la taille
-            gtk_widget_modify_font(entry, font_desc);
-            pango_font_description_free(font_desc);
 
             gtk_entry_set_alignment(GTK_ENTRY(entry), 0.5);
     
-            // Restreindre les entrées à des chiffres uniquement
-            //gtk_entry_set_input_restrictions(GTK_ENTRY(entry), GTK_INPUT_RESTRICT_NUMERIC);
-
-
-            // Calculer la position de chaque case
-            gint cell_x = i * cell_size;
-            gint cell_y = j * cell_size;
-
-            //int cell_width = gtk_widget_get_allocated_width(grid) / max_dimension;
-            //int cell_height = gtk_widget_get_allocated_height(grid) / max_dimension;
-
-             // Définir la taille de chaque case
             gtk_widget_set_size_request(entry, cell_size, cell_size);
 
-            // Connecter la fonction de rappel pour le changement de texte
+            EntryIndices *indices = g_malloc(sizeof(EntryIndices));
+            indices->i = i;
+            indices->j = j;
+
+            g_object_set_data(G_OBJECT(entry), "entry_indices", indices);
+
             g_signal_connect(entry, "changed", G_CALLBACK(on_entry_changed), NULL);
 
             gtk_grid_attach(GTK_GRID(grid), entry, j, i, 1, 1);
@@ -658,52 +626,241 @@ void create_sudoku_grid(GtkWidget *grid, int hexa) {
     }
 }
 
-void sudoku(GtkWidget *_, gpointer data){
-    printf("SUDOKU\n");
-    for (int i = 0; i < 16; i ++){
+
+void ocr(GtkWidget *_, gpointer data)
+{
+    MainWindow *main_window = (MainWindow *)data;
+
+    hexa = verifieEtSupprime("./tmp/hexa.txt");
+    //printf("HEXA OCR = %d\n", hexa);
+
+    
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 16; j++) {
+            mat[i][j] = -1;
+        }
+    }
+
+    perform_nn(hexa, mat);
+
+ /*   for (int i = 0; i < 16; i ++){
         for (int j = 0; j < 16; j ++){
-            if (mat[i][j] < 0){
+            if (mat[i][j] < 0)
                 printf("  |");
-                mat[i][j] = 0;
-            }
             else
                 printf("%2d|", mat[i][j]);
-            
         }
         printf("\n");
+    }*/
+
+
+    *main_window->images->current_image = SDL_Surface_to_Image2(IMG_Load("../tmp/croped"));
+
+
+    set_step(main_window->step_indicators, 5);
+
+    set_page(main_window, "page5");
+
+    GtkViewport *viewport = GTK_VIEWPORT(main_window->pages->page5->container);
+    GList *child = gtk_container_get_children(GTK_CONTAINER(viewport));
+
+
+    //GList *child = gtk_container_get_children(GTK_VIEWPORT(main_window->pages->page5->container));
+
+        // Accéder au premier enfant
+    GtkWidget *box = GTK_WIDGET(child->data);
+
+    // Obtenez la liste des enfants du conteneur (box)
+    GList *children = gtk_container_get_children(GTK_CONTAINER(box));
+
+        // Vérifiez si la liste n'est pas vide
+    GtkWidget *cont = GTK_WIDGET(children->data);
+
+        // N'oubliez pas de libérer la liste des enfants
+    g_list_free(child);
+    g_list_free(children);
+
+    //printf("TEST\n");
+
+    GtkWidget *grid = gtk_grid_new();
+     // Ajoutez la nouvelle grille à la fenêtre principale
+    gtk_container_add(GTK_CONTAINER(cont), grid);
+
+    create_sudoku_grid(grid, hexa);
+
+    set_sudoku_values(grid, mat, hexa);
+
+    gtk_widget_show_all(main_window->window);
+
+    if (_ == NULL)
+        printf(" ");
+}
+
+int** createSudokuFromHexa(int mat[16][16]){
+    int** sud = malloc(9 * sizeof(int*)); // Allocate memory for rows
+    for (int i = 0; i < 9; i++) {
+        sud[i] = malloc(9 * sizeof(int)); // Allocate memory for columns
     }
+    for (int i = 0; i < 9; i ++){
+        for (int j = 0; j < 9; j ++){
+            sud[i][j] = mat[i][j];
+            if (sud[i][j] < 0)
+                sud[i][j] = 0;
+        }
+    }
+    return sud;
+}
+
+//this function returns 0 if there is multiple times the same digit in a row, column or square
+int gridIsValid(int** grid){
+    int* tab = malloc(9 * sizeof(int));
+    for (int i = 0; i < 9; i ++){
+        for (int j = 0; j < 9; j ++){
+            tab[j] = 0;
+        }
+        for (int j = 0; j < 9; j ++){
+            if (grid[i][j] != 0){
+                if (tab[grid[i][j] - 1] == 1){
+                    return 0;
+                }
+                else{
+                    tab[grid[i][j] - 1] = 1;
+                }
+            }
+        }
+    }
+    for (int i = 0; i < 9; i ++){
+        for (int j = 0; j < 9; j ++){
+            tab[j] = 0;
+        }
+        for (int j = 0; j < 9; j ++){
+            if (grid[j][i] != 0){
+                if (tab[grid[j][i] - 1] == 1){
+                    return 0;
+                }
+                else{
+                    tab[grid[j][i] - 1] = 1;
+                }
+            }
+        }
+    }
+    for (int i = 0; i < 9; i += 3){
+        for (int j = 0; j < 9; j += 3){
+            for (int k = 0; k < 9; k ++){
+                tab[k] = 0;
+            }
+            for (int k = 0; k < 9; k ++){
+                if (grid[i + k / 3][j + k % 3] != 0){
+                    if (tab[grid[i + k / 3][j + k % 3] - 1] == 1){
+                        return 0;
+                    }
+                    else{
+                        tab[grid[i + k / 3][j + k % 3] - 1] = 1;
+                    }
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+char** createCharMatrixFromIntMatrix(int mat[][16]){
+    char** sud = malloc(16 * sizeof(char*)); // Allocate memory for rows
+    for (int i = 0; i < 16; i++) {
+        sud[i] = malloc(16 * sizeof(char)); // Allocate memory for columns
+    }
+    for (int i = 0; i < 16; i ++){
+        for (int j = 0; j < 16; j ++){
+            sud[i][j] = mat[i][j];
+            if (sud[i][j] < 0)
+                sud[i][j] = 0;
+        }
+    }
+    return sud;
+}
+
+int gridIsValidHexa(char** grid){
+    int* tab = malloc(16 * sizeof(int));
+    for (int i = 0; i < 16; i ++){
+        for (int j = 0; j < 16; j ++){
+            tab[j] = 0;
+        }
+        for (int j = 0; j < 16; j ++){
+            if (grid[i][j] != 0){
+                if (tab[grid[i][j] - 1] == 1){
+                    return 0;
+                }
+                else{
+                    tab[grid[i][j] - 1] = 1;
+                }
+            }
+        }
+    }
+    for (int i = 0; i < 16; i ++){
+        for (int j = 0; j < 16; j ++){
+            tab[j] = 0;
+        }
+        for (int j = 0; j < 16; j ++){
+            if (grid[j][i] != 0){
+                if (tab[grid[j][i] - 1] == 1){
+                    return 0;
+                }
+                else{
+                    tab[grid[j][i] - 1] = 1;
+                }
+            }
+        }
+    }
+    for (int i = 0; i < 16; i += 4){
+        for (int j = 0; j < 16; j += 4){
+            for (int k = 0; k < 16; k ++){
+                tab[k] = 0;
+            }
+            for (int k = 0; k < 16; k ++){
+                if (grid[i + k / 4][j + k % 4] != 0){
+                    if (tab[grid[i + k / 4][j + k % 4] - 1] == 1){
+                        return 0;
+                    }
+                    else{
+                        tab[grid[i + k / 4][j + k % 4] - 1] = 1;
+                    }
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+void sudoku(GtkWidget *_, gpointer data){
     int solved = 0;
     if (hexa == 0){
-        int** sud = malloc(9 * sizeof(int*)); // Allocate memory for rows
-        for (int i = 0; i < 9; i++) {
-            sud[i] = malloc(9 * sizeof(int)); // Allocate memory for columns
+        int** sud = createSudokuFromHexa(mat);
+        if(gridIsValid(sud)) {
+            print_grid(sud);
+            solved = solve_sudoku(sud, 0, 0);
+            print_grid(sud);
         }
-        for (int i = 0; i < 9; i ++){
-            for (int j = 0; j < 9; j ++){
-                sud[i][j] = mat[i][j];
-                if (sud[i][j] < 0)
-                    sud[i][j] = 0;
-            }
+        else{
+            printf("Invalid grid or non solvable sudoku\n");
         }
-        print_grid(sud);
-        solved = solve_sudoku(sud, 0, 0);
-        print_grid(sud);
     }
     else{
-        char** sud = malloc(16 * sizeof(char*)); // Allocate memory for rows
-        for (int i = 0; i < 16; i++) {
-            sud[i] = malloc(16 * sizeof(char)); // Allocate memory for columns
+        char** sud = createCharMatrixFromIntMatrix(mat);
+        if(gridIsValidHexa(sud)) {
+            dispBoard(sud);
+            solved = solveSudoku(sud);
+            dispBoard(sud);
         }
-        for (int i = 0; i < 16; i ++){
-            for (int j = 0; j < 16; j ++){
-                sud[i][j] = mat[i][j];
-                if (sud[i][j] < 0)
-                    sud[i][j] = 0;
-            }
+        else{
+            printf("Invalid grid or non solvable hexadoku\n");
         }
-        solved = solveSudoku(mat);
     }
+
     printf("SOLVED : %d\n", solved);
+
+    if (_ == NULL || data == NULL)
+        printf(" ");
+    
 }
 
 int main(int argc, char *argv[]) {

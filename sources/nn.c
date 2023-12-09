@@ -180,12 +180,17 @@ void network_save(NeuralNetwork* net, char* file_string) {
 	chdir("-"); // Go back to the orignal directory
 }
 
-NeuralNetwork* network_load(char* file_string) {
+NeuralNetwork* network_load(char* file_string, int hexa) {
 	NeuralNetwork* net = malloc(sizeof(NeuralNetwork));
 	char entry[MAXCHAR];
 	chdir(file_string);
 
-	FILE* descriptor = fopen("descriptor", "r");
+	FILE* descriptor;
+	if (hexa == 0)
+	 descriptor = fopen("descriptor", "r");
+	else
+		descriptor = fopen("descriptor_hexa", "r");
+
 	fgets(entry, MAXCHAR, descriptor);
 	net->input = atoi(entry);
 	fgets(entry, MAXCHAR, descriptor);
@@ -193,8 +198,14 @@ NeuralNetwork* network_load(char* file_string) {
 	fgets(entry, MAXCHAR, descriptor);
 	net->output = atoi(entry);
 	fclose(descriptor);
-	net->hidden_weights = matrix_load("hidden");
-	net->output_weights = matrix_load("output");
+	if (hexa == 0){
+		net->hidden_weights = matrix_load("hidden");
+		net->output_weights = matrix_load("output");
+		}
+	else{
+		net->hidden_weights = matrix_load("hidden_hexa");
+		net->output_weights = matrix_load("output_hexa");
+	}
 	printf("Successfully loaded network from '%s'\n", file_string);
 	chdir("-"); // Go back to the original directory
 	return net;
@@ -280,17 +291,16 @@ void perform_nn(int hexa, int res[][16]) {
 
 	closedir(dir);
 
-	if (hexa == 0)// normal
-		net = network_load("./neural_network");
-	else // hexa
-		net = network_load("./neural_network/normal");
+	//printf("HAHA\n");
 
-	printf("TEST : %d\n", count);
+		net = network_load("./neural_network", hexa);
+
+	//printf("TEST : %d\n", count);
 
 	for (int i = 0; i < count; i ++){
 		Matrix* prediction = network_predict_img(net, fileImagePairs[i].img);
 		int id = matrix_argmax(prediction);
-		printf("%s : %d, %.4lf\n", fileImagePairs[i].filename, id, matrix_score(prediction, id));
+		//printf("%s : %d, %.4lf\n", fileImagePairs[i].filename, id, matrix_score(prediction, id));
 		int x = charToHex(fileImagePairs[i].filename[12]);
 		int y = charToHex(fileImagePairs[i].filename[13]);
 		res [x][y] = id;

@@ -103,7 +103,7 @@ SDL_Surface* ResizeSurface(SDL_Surface* original_surface, int new_width, int new
         new_width = (int)((float)new_height * aspect_ratio);
     }
 
-    printf("w = %d, h = %d\n", new_width, new_height);
+    //printf("w = %d, h = %d\n", new_width, new_height);
 
     // Create new surface consequently
     SDL_Surface* new_surface = SDL_CreateRGBSurface(0, new_width, new_height, original_surface->format->BitsPerPixel, original_surface->format->Rmask, original_surface->format->Gmask, original_surface->format->Bmask, original_surface->format->Amask);

@@ -4,7 +4,7 @@ EXECUTABLE = main
 CC = gcc
 
 # Compilation options
-CFLAGS = -Wall -Wextra -std=c99 -g -D_GNU_SOURCE $(shell pkg-config gtk+-3.0 --cflags)
+CFLAGS = -Wall -Wextra -std=c99 -g -D_GNU_SOURCE -Wno-unused-result $(shell pkg-config gtk+-3.0 --cflags)
 
 # Libs
 LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lm $(shell pkg-config gtk+-3.0 --libs) -I/usr/include/gtk/gtk.h -I/usr/include/gdk/gdk.h -export-dynamic

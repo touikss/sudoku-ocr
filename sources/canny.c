@@ -509,7 +509,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         hexa = 1;
     }
 
-    printf("HEXA = %d\n", hexa);
+    //printf("HEXA = %d\n", hexa);
 
     if (detected){
         char* path = (char*)malloc(40); 
@@ -611,7 +611,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
             }
         }
         double angle = ShapeTab_ComputeAngle(verified) * 180 / M_PI;
-        printf("COUNT = %d\n", count);
+        //printf("COUNT = %d\n", count);
         rotate(&origin, angle);
         //Image_Save(&origin, "ROTATÉE");
         Image_Free(&origin);
@@ -626,9 +626,9 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
     printf("----- RESULT -----\n");
     printf("ITERAION = %d\n", iteration);
     printf("FOUND = %s\n", detected? "YES" : "NO");
-
+    printf("HEXA = %s\n", hexa? "YES" : "NO");
     SDL_Rect rect;
-    if (1 == 1){
+    if (hexa == 0){
         rect.w = abs((int)matrice[0][8]->extremum[1] - (int)matrice[8][0]->extremum[0]);
         rect.h = abs((int)matrice[8][8]->extremum[3] - (int)matrice[0][0]->extremum[2]);
     }
@@ -653,6 +653,13 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
     if (rect.y + rect.h >= (int)rese.height)
         rect.h = rese.height - rect.y - 5;
 
+    if (rect.x < 0)
+        rect.x = 0;
+    if (rect.y < 0)
+        rect.y = 0;
+    
+    //printf("X : %d, Y : %d, W : %d, H : %d\n", rect.x, rect.y, rect.w, rect.h);
+    //printf("width = %d, height = %d\n", rese.width, rese.height);
     Image t = Image_Crop(&rese, &rect);
     Image_Save(&t, "tmp/croped");
     Image_Free(&t);

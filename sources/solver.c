@@ -166,6 +166,51 @@ int solve_sudoku(int** grid, int row, int col) {
     return 0; // If no valid solution is found, return 0.
 }
 
+/*SDL_Surface* create_sudoku_surface(int** sudoku_grid, int size) {
+    int SCREEN_SIZE = 200;
+    SDL_Surface* surface = NULL;
+
+    // Initialisation de SDL
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf("SDL n'a pas pu être initialisé. SDL_Error: %s\n", SDL_GetError());
+        return NULL;
+    }
+
+    // Création de la surface
+    surface = SDL_CreateRGBSurface(0, SCREEN_SIZE, SCREEN_SIZE, 32, 0, 0, 0, 0);
+    if (surface == NULL) {
+        printf("La surface SDL n'a pas pu être créée. SDL_Error: %s\n", SDL_GetError());
+        SDL_Quit();
+        return NULL;
+    }
+
+    // Dessin de la grille de sudoku
+    SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 255, 255, 255));  // Fond blanc
+
+    int cell_size = SCREEN_SIZE / size;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            SDL_Rect cell_rect = {j * cell_size, i * cell_size, cell_size, cell_size};
+            SDL_Color color = {255, 0, 0, 255};  // Couleur par défaut (rouge)
+            
+            if (sudoku_grid[i][j] != 0) {
+                // Si la valeur de la case est non nulle, dessiner le nombre dans la case
+                char text[2];
+                snprintf(text, sizeof(text), "%d", sudoku_grid[i][j]);
+                SDL_Surface* text_surface = TTF_RenderText_Solid(font, text, color);
+                SDL_BlitSurface(text_surface, NULL, surface, &cell_rect);
+                SDL_FreeSurface(text_surface);
+            } else {
+                // Si la valeur de la case est nulle, dessiner une cellule vide
+                SDL_FillRect(surface, &cell_rect, SDL_MapRGB(surface->format, 255, 255, 255));
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_RenderDrawRect(renderer, &cell_rect);
+            }
+        }
+    }
+
+    return surface;
+}*/
 // This function display the grid in an image
 void displaySudoku(SDL_Renderer* renderer, int grid[GRID_SIZE][GRID_SIZE], TTF_Font* font) {
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Couleur de fond blanche

@@ -975,24 +975,17 @@ void Image_DrawShapePoint(Image* image, Shape* shape, Color color)
 
 void Image_DrawMatrix(Image* image, Shape* mat[][16])
 {
-    int count = 0;
+    double e = 1;
     for (int i = 0; i < 16; i ++){
         for (int j = 0; j < 16; j++){
-            Color col = {0, 0, 0};
-            if (count < 9)
-                col.r = 50 + count * 20;
-            else if (count < 18){
-                col.b = 50 + count * 20;
-                col.g = 30;
-            }
-            else if (count < 27)
-                col.g = 50 + count * 20;
+            e *= 2.345;
+            Color color = {0, 0, 0};
+            color.r = (int)((1 + cos(e)) * 127);
+            color.g = (int)((1 + sin(e * e)) * 127);
+            color.b = (int)((cos(e) * sin(e) + 1) *64 );
 
             if (mat[i][j] != NULL){
-                Image_DrawShape(image, mat[i][j], col);
-                count ++;
-                if (count >= 27)
-                    count = 0;
+                Image_DrawShape(image, mat[i][j], color);
             }
         }
     }

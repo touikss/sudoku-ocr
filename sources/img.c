@@ -48,7 +48,7 @@ Img** csv_to_imgs(char* file_string, int number_of_imgs) {
 	if (delta < 0)
 		delta = 1;
 
-	printf("DELTA : %d\n", delta);
+	//printf("DELTA : %d\n", delta);
 	int i = 0;
 	while (feof(fp) != 1 && i < number_of_imgs) {
 
@@ -66,7 +66,7 @@ Img** csv_to_imgs(char* file_string, int number_of_imgs) {
 
 		imgs[i] = malloc(sizeof(Img));
 		
-		printf("LABEL : %s, %d\n", token, i);
+		//printf("LABEL : %s, %d\n", token, i);
 
 		imgs[i]->img_data = matrix_create(28, 28);
 		while (token != NULL) {
@@ -83,7 +83,7 @@ Img** csv_to_imgs(char* file_string, int number_of_imgs) {
 		i++;
 	}
 
-	printf("Image3 loaded : %d\n", i);
+	//printf("Image3 loaded : %d\n", i);
 
 	fclose(fp);
 	return imgs;
