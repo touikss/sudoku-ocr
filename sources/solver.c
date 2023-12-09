@@ -135,7 +135,7 @@ int is_valid(int** grid, int row, int col, int num) {
 // It starts at the specified row and column and recursively fills in the grid's cells.
 // Returns 1 if a solution is found, 0 otherwise.
 int solve_sudoku(int** grid, int row, int col) {
-    print_grid(grid);
+    //print_grid(grid);
     // Base case: If we have reached the end of the grid (row 8, column 9), a solution is found.
     if (row == 8 && col == 9)
         return 1;

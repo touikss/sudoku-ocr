@@ -21,6 +21,6 @@ void buildNotes(char** grid);
 int solveSudoku(char** grid);
 int unique(char** grid);
 int singles(char** grid);
-int main(int argc, char** argv);
+int suducul(char** grid);
 
 #endif

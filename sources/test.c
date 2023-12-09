@@ -11,6 +11,9 @@
 #include "../headers/solver.h"
 //#include <pango/pangofont.h>
 
+void sudoku(GtkWidget *_, gpointer data);
+void restart(GtkWidget *_, gpointer data);
+
 #define IMAGE_SIZE 500
 #define VERBOSE_MODE 0
 #define VERBOSE_PATH NULL
@@ -24,11 +27,20 @@
     }
 
 SDL_Surface* globalImage;
+SDL_Surface* globalRes;
+GtkWidget *box;
+
+int detected = 0;
 
 double rotateScale = 0;
 int hexa = 0;
 char* path;
 int mat[16][16];
+int display[16][16];
+
+GtkWidget *image;
+GtkWidget *grid;
+GtkWidget *cont_grid;
 
 struct StepIndicators
 {
@@ -55,6 +67,7 @@ struct Controls
     GtkButton *correction_done_button;
     GtkButton *done_digit_detection;
     GtkButton *solve;
+    GtkButton *restart_button;
     GtkFileChooserButton *file_chooser_button;
     GtkEventBox *crop_event_box;
 };
@@ -220,6 +233,22 @@ void set_button_to_load(GtkButton *button)
     gtk_spinner_start(spinner);
 }
 
+void reset_button(GtkButton *button)
+{
+    gtk_widget_set_sensitive(GTK_WIDGET(button), TRUE);
+
+    GtkSpinner *spinner = GTK_SPINNER(gtk_bin_get_child(GTK_BIN(button)));
+
+    if (spinner)
+    {
+        gtk_spinner_stop(spinner);
+        gtk_container_remove(GTK_CONTAINER(button), GTK_WIDGET(spinner));
+    }
+
+    gtk_button_set_label(button, "Process");
+}
+
+
 void set_page(MainWindow *main_window, gchar *page)
 {
     main_window->pages->current_page = page;
@@ -357,9 +386,18 @@ void *grid_detection_handler(gpointer data)
     SDL_Surface* surface = ApplyCannyFilter(globalImage);
     Image_Free(&temp);
 
-    *main_window->images->current_image = SDL_Surface_to_Image2(surface);
+    if (surface == NULL){
+        detected = 0;
+        set_page(main_window, "page1");
+        set_step(main_window->step_indicators, 1);
+        restart(NULL, data);
+    }
+    else{
+        detected = 1;
+        *main_window->images->current_image = SDL_Surface_to_Image2(surface);
 
-    g_idle_add(grid_detection_finished, main_window);
+        g_idle_add(grid_detection_finished, main_window);
+    }
 
     return NULL;
 }
@@ -551,7 +589,7 @@ void on_entry_changed(GtkWidget *entry, gpointer user_data) {
     // Récupérer la structure EntryIndices depuis l'entrée
     EntryIndices *indices = g_object_get_data(G_OBJECT(entry), "entry_indices");
     if (indices != NULL) {
-        g_print("Label de la case : %s, %d, %d\n", text, indices->i, indices->j);
+        //g_print("Label de la case : %s, %d, %d\n", text, indices->i, indices->j);
         int val = 0;
         sscanf(text, "%X", &val);
         mat[indices->i][indices->j] = val;
@@ -643,16 +681,6 @@ void ocr(GtkWidget *_, gpointer data)
 
     perform_nn(hexa, mat);
 
- /*   for (int i = 0; i < 16; i ++){
-        for (int j = 0; j < 16; j ++){
-            if (mat[i][j] < 0)
-                printf("  |");
-            else
-                printf("%2d|", mat[i][j]);
-        }
-        printf("\n");
-    }*/
-
 
     *main_window->images->current_image = SDL_Surface_to_Image2(IMG_Load("../tmp/croped"));
 
@@ -664,27 +692,20 @@ void ocr(GtkWidget *_, gpointer data)
     GtkViewport *viewport = GTK_VIEWPORT(main_window->pages->page5->container);
     GList *child = gtk_container_get_children(GTK_CONTAINER(viewport));
 
-
-    //GList *child = gtk_container_get_children(GTK_VIEWPORT(main_window->pages->page5->container));
-
-        // Accéder au premier enfant
     GtkWidget *box = GTK_WIDGET(child->data);
 
     // Obtenez la liste des enfants du conteneur (box)
     GList *children = gtk_container_get_children(GTK_CONTAINER(box));
 
         // Vérifiez si la liste n'est pas vide
-    GtkWidget *cont = GTK_WIDGET(children->data);
+    cont_grid = GTK_WIDGET(children->data);
 
-        // N'oubliez pas de libérer la liste des enfants
     g_list_free(child);
     g_list_free(children);
 
-    //printf("TEST\n");
-
-    GtkWidget *grid = gtk_grid_new();
+    grid = gtk_grid_new();
      // Ajoutez la nouvelle grille à la fenêtre principale
-    gtk_container_add(GTK_CONTAINER(cont), grid);
+    gtk_container_add(GTK_CONTAINER(cont_grid), grid);
 
     create_sudoku_grid(grid, hexa);
 
@@ -771,9 +792,15 @@ char** createCharMatrixFromIntMatrix(int mat[][16]){
     }
     for (int i = 0; i < 16; i ++){
         for (int j = 0; j < 16; j ++){
-            sud[i][j] = mat[i][j];
-            if (sud[i][j] < 0)
-                sud[i][j] = 0;
+            if (mat[i][j] < 10){
+                sud[i][j] = (char)(mat[i][j] + '0');
+            }
+            else{
+                sud[i][j] = (mat[i][j] - 10 + 'A');
+            }
+            //sud[i][j] = mat[i][j];
+            if (mat[i][j] < 0)
+                sud[i][j] = 'X';
         }
     }
     return sud;
@@ -781,12 +808,13 @@ char** createCharMatrixFromIntMatrix(int mat[][16]){
 
 int gridIsValidHexa(char** grid){
     int* tab = malloc(16 * sizeof(int));
+    
     for (int i = 0; i < 16; i ++){
         for (int j = 0; j < 16; j ++){
             tab[j] = 0;
         }
         for (int j = 0; j < 16; j ++){
-            if (grid[i][j] != 0){
+            if (grid[i][j] != 'X'){
                 if (tab[grid[i][j] - 1] == 1){
                     return 0;
                 }
@@ -796,12 +824,13 @@ int gridIsValidHexa(char** grid){
             }
         }
     }
+    
     for (int i = 0; i < 16; i ++){
         for (int j = 0; j < 16; j ++){
             tab[j] = 0;
         }
         for (int j = 0; j < 16; j ++){
-            if (grid[j][i] != 0){
+            if (grid[j][i] != 'X'){
                 if (tab[grid[j][i] - 1] == 1){
                     return 0;
                 }
@@ -817,7 +846,7 @@ int gridIsValidHexa(char** grid){
                 tab[k] = 0;
             }
             for (int k = 0; k < 16; k ++){
-                if (grid[i + k / 4][j + k % 4] != 0){
+                if (grid[i + k / 4][j + k % 4] != 'X'){
                     if (tab[grid[i + k / 4][j + k % 4] - 1] == 1){
                         return 0;
                     }
@@ -832,6 +861,20 @@ int gridIsValidHexa(char** grid){
 }
 
 void sudoku(GtkWidget *_, gpointer data){
+
+    MainWindow *main_window = (MainWindow *)data;
+
+    if (chdir("..") == 0) {}    
+
+    char buffer[4096];  // Vous pouvez ajuster la taille du tampon selon vos besoins
+
+    if (getcwd(buffer, sizeof(buffer)) != NULL) {
+        printf("Le répertoire de travail actuel est : %s\n", buffer);
+    } else {
+        perror("getcwd() a échoué");
+    }
+
+
     int solved = 0;
     if (hexa == 0){
         int** sud = createSudokuFromHexa(mat);
@@ -839,6 +882,12 @@ void sudoku(GtkWidget *_, gpointer data){
             print_grid(sud);
             solved = solve_sudoku(sud, 0, 0);
             print_grid(sud);
+            for (int i = 0; i < 9; i ++){
+                for (size_t j = 0; j < 9; j++)
+                {
+                    display[i][j] = sud[i][j];
+                }
+            }
         }
         else{
             printf("Invalid grid or non solvable sudoku\n");
@@ -846,21 +895,89 @@ void sudoku(GtkWidget *_, gpointer data){
     }
     else{
         char** sud = createCharMatrixFromIntMatrix(mat);
+        dispBoard(sud);
         if(gridIsValidHexa(sud)) {
+            sud[0][0] = 'F';
+            solved = !suducul(sud);
             dispBoard(sud);
-            solved = solveSudoku(sud);
-            dispBoard(sud);
+            for (int i = 0; i < 16; i ++){
+                for (size_t j = 0; j < 16; j++)
+                {
+                    if (sud[i][j] > '9')
+                        display[i][j] = sud[i][j] - 'A';
+                    else
+                        display[i][j] = sud[i][j] - '0';
+                }
+            }
         }
         else{
             printf("Invalid grid or non solvable hexadoku\n");
         }
+
     }
 
-    printf("SOLVED : %d\n", solved);
+    set_step(main_window->step_indicators, 6);
+
+    set_page(main_window, "page6");
+    
+    Image black = Image_CreateBlack(400, 400);
+    globalRes = Image_CreateSurface(&black);
+    globalRes = draw_sudoku_grid(globalRes, display, hexa == 0? 9 : 16);
+    //*main_window->images->current_image = SDL_Surface_to_Image2(surface);
+    IMG_SavePNG(globalRes, "./tmp/res");
+    GtkViewport *viewport = GTK_VIEWPORT(main_window->pages->page6->container);
+    GList *child = gtk_container_get_children(GTK_CONTAINER(viewport));
+
+    box = GTK_WIDGET(child->data);
+
+    // Obtenez la liste des enfants du conteneur (box)
+    GList *children = gtk_container_get_children(GTK_CONTAINER(box));
+
+   // GtkWidget *cont = GTK_WIDGET(children->data);
+
+    g_list_free(child);
+    g_list_free(children);
+
+    if (solved == 1)
+        image = gtk_image_new_from_file("./tmp/res");
+    else 
+        image = gtk_image_new_from_file("./res/not_found.png");
+
+    // Ajouter l'image à la boîte
+    gtk_box_pack_start(GTK_BOX(box), image, TRUE, TRUE, 0);
+
+    gtk_widget_show_all(main_window->window);
+
+    //printf("SOLVED : %d\n", solved);
+
+    if (_ == NULL || data == NULL)
+        printf(" ");    
+}
+
+void save(GtkWidget *_, gpointer data){
+
+    IMG_SavePNG(globalRes, "OUTPUT");
 
     if (_ == NULL || data == NULL)
         printf(" ");
-    
+}
+
+void restart(GtkWidget *_, gpointer data)
+{
+    MainWindow *main_window = (MainWindow *)data;
+
+    reset_button(main_window->controls->image_rotation_done_button);
+
+    set_step(main_window->step_indicators, 1);
+
+    set_page(main_window, "page1");
+
+    if (detected == 1){
+        gtk_container_remove(GTK_CONTAINER(box), image);
+        gtk_container_remove(GTK_CONTAINER(cont_grid), grid);
+    }
+    if (_ == NULL || data == NULL)
+        printf(" ");
 }
 
 int main(int argc, char *argv[]) {
@@ -878,13 +995,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-
     // Création de la fenêtre principale
     GtkWindow *window
             = GTK_WINDOW(gtk_builder_get_object(builder, "sudokuocr"));
 
     GtkButton *save_button
-            = GTK_BUTTON(gtk_builder_get_object(builder, "savebutton"));
+            = GTK_BUTTON(gtk_builder_get_object(builder, "save_button"));
     GtkButton *open_button
             = GTK_BUTTON(gtk_builder_get_object(builder, "openbutton"));
     GtkButton *confirm_image_button
@@ -897,6 +1013,9 @@ int main(int argc, char *argv[]) {
             = GTK_BUTTON(gtk_builder_get_object(builder, "confirmcropbutton"));
     GtkButton *correction_done_button
             = GTK_BUTTON(gtk_builder_get_object(builder, "solve"));
+
+    GtkButton *restart_button
+            = GTK_BUTTON(gtk_builder_get_object(builder, "restart_button"));
 
     GtkEventBox *crop_event_box
             = GTK_EVENT_BOX(gtk_builder_get_object(builder, "cropeventbox"));
@@ -949,8 +1068,8 @@ int main(int argc, char *argv[]) {
     GtkDrawingArea *page5_image
             = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "page5image"));
     GtkDrawingArea *page6_image
-            = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "page6image"));
-
+            = GTK_DRAWING_AREA(gtk_builder_get_object(builder, "page6image1"));
+  
     GtkLabel *page2_label
             = GTK_LABEL(gtk_builder_get_object(builder, "page2label"));
     GtkLabel *page3_label
@@ -985,6 +1104,7 @@ int main(int argc, char *argv[]) {
             .image_rotation_done_button = rotation_done_button,
             .confirm_crop_button = confirm_crop_button,
             .correction_done_button = correction_done_button,
+            .restart_button = restart_button,
             .crop_event_box = crop_event_box,
     };
 
@@ -1091,6 +1211,11 @@ int main(int argc, char *argv[]) {
                      G_CALLBACK(rotation_gauche), &main_window);
     g_signal_connect(rotation_right, "clicked",
                    G_CALLBACK(rotation_droite), &main_window);
+     g_signal_connect(save_button, "clicked",
+                   G_CALLBACK(save), &main_window);
+
+    g_signal_connect(restart_button, "clicked",
+                     G_CALLBACK(restart), &main_window);
 
 
     // Images Drawing Area

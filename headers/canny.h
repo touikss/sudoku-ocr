@@ -19,6 +19,9 @@ typedef struct {
     int strength;
 } Gradient;
 
+
+SDL_Surface* draw_sudoku_grid(SDL_Surface* surface, int sudoku_grid[][16], int size);
+
 int verifieEtSupprime(const char *nomFichier);
 
 SDL_Surface* ConvertSurfaceToGrayScale(SDL_Surface *image);

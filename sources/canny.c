@@ -10,6 +10,7 @@
 #include <complex.h>
 #include <SDL2/SDL.h>   
 #include <dirent.h>
+#include <SDL2/SDL_ttf.h>
 
 #define CASE 1
 #define GRID 2
@@ -335,6 +336,88 @@ int verifieEtSupprime(const char *nomFichier) {
     }
 }
 
+SDL_Surface* draw_sudoku_grid(SDL_Surface* surface, int sudoku_grid[][16], int size) {
+    
+    if (TTF_Init() == -1) {
+    // Gestion de l'erreur
+        fprintf(stderr, "Erreur d'initialisation de SDL_ttf : %s\n", TTF_GetError());
+    // Gérer l'erreur selon les besoins de votre application
+    // ...
+    }else {
+        //printf("Police chargée avec succès\n");
+    }
+
+    TTF_Font* font = TTF_OpenFont("res/font.ttf", 20);
+    if (font == NULL) {
+        // Gestion de l'erreur
+        fprintf(stderr, "Erreur de chargement de la police : %s\n", TTF_GetError());
+        // Gérer l'erreur selon les besoins de votre application
+        // ...
+    }
+    
+    // Vérifier que la surface n'est pas nulle
+    if (surface == NULL || sudoku_grid == NULL) {
+        return NULL;
+    }
+
+    // Obtenir la largeur et la hauteur de la surface
+    int width = surface->w;
+    int height = surface->h;
+
+    // Calculer la taille d'une cellule en fonction de la taille de la grille et de la surface
+    int cell_size = width / size;
+
+    // Initialiser la couleur blanche pour les lignes
+    Uint32 white = SDL_MapRGB(surface->format, 255, 255, 255);
+
+    // Dessiner les lignes verticales et horizontales de la grille
+    for (int i = 0; i <= size; i++) {
+        // Dessiner les lignes horizontales
+        SDL_Rect horizontal_line = {0, i * cell_size, width, 3};
+        SDL_FillRect(surface, &horizontal_line, white);
+
+        // Dessiner les lignes verticales
+        SDL_Rect vertical_line = {i * cell_size, 0, 3, height};
+        SDL_FillRect(surface, &vertical_line, white);
+    }
+
+    // Dessiner les chiffres dans les cellules
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            // Ignorer les cellules vides (avec la valeur 0)
+            if (sudoku_grid[i][j] != 0) {
+                // Convertir l'entier en chaîne de caractères
+                char digit[2];
+                snprintf(digit, sizeof(digit), "%d", sudoku_grid[i][j]);
+
+                // Créer une surface de texte avec une police de base
+                SDL_Color text_color = {255, 255, 255, 255};  // Noir
+                SDL_Surface* text_surface = TTF_RenderText_Solid(font, digit, text_color);
+
+                 //Positionner la surface de texte au centre de la cellule
+                SDL_Rect text_position = {
+                    i * cell_size + (cell_size - text_surface->w) / 2,
+                    j * cell_size + (cell_size - text_surface->h) / 2,
+                    0,
+                    0};
+                //printf("Position du texte : x = %d, y = %d, largeur = %d, hauteur = %d\n",
+                  //  text_position.x, text_position.y, text_surface->w, text_surface->h);
+
+                //printf("i = %d, j = %d, valeur = %d\n", i, j, sudoku_grid[i][j]);
+
+                // Dessiner la surface de texte sur la surface principale
+                SDL_BlitSurface(text_surface, NULL, surface, &text_position);
+
+                // Libérer la surface de texte
+                SDL_FreeSurface(text_surface);
+            }
+        }
+    }
+    TTF_CloseFont(font);
+    TTF_Quit();
+    return surface;
+}
+
 
 SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
 {    
@@ -509,6 +592,9 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         hexa = 1;
     }
 
+    if (!detected)
+        return NULL;
+
     //printf("HEXA = %d\n", hexa);
 
     if (detected){
@@ -657,7 +743,8 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         rect.x = 0;
     if (rect.y < 0)
         rect.y = 0;
-    
+
+
     //printf("X : %d, Y : %d, W : %d, H : %d\n", rect.x, rect.y, rect.w, rect.h);
     //printf("width = %d, height = %d\n", rese.width, rese.height);
     Image t = Image_Crop(&rese, &rect);
@@ -669,7 +756,6 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
     //Image_Save(&copy, "tmp/grid");
     Image_Free(&copy);
 
-
     for (int i = 0; i < 16; i ++){
         for (int j = 0; j < 16; j ++){  
             Shape* current = matrice[i][j];
@@ -677,9 +763,6 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                 Shape_Free(current);
         }
     }
-
-    if (!detected)
-        return NULL;
 
     return res;
 }

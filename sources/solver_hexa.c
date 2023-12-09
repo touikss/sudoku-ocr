@@ -249,18 +249,9 @@ int singles(char **grid) {
     return 0;
 }
 
-/*
-int main(int argc, char** argv)
-{
-    // Check if the program is executed with the correct number of arguments
-    if (argc < 2) {
-        printf("You must use this program with at least one argument");
-        return 1;
-    }
 
-    // Display the initial Sudoku problem
-    printf("Here Is The Sudoku Problem:\n");
-    char** grid = getFromFile(argv[1]);
+int suducul(char** grid)
+{
     dispBoard(grid);
 
     // Build notes for possible values in empty cells
@@ -282,4 +273,4 @@ int main(int argc, char** argv)
     }
 
     return 0;
-}*/
+}
