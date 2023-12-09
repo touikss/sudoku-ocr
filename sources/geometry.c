@@ -29,12 +29,12 @@ point line_intersect(line line1, line line2)
 {
     point res;
 
-    // Line 1 represented as a1 + b1 = c1
+    
     double a1 = line1.y1 - line1.y0;
     double b1 = line1.x0 - line1.x1;
     double c1 = a1 * line1.x0 + b1 * line1.y0;
 
-    // Line 2 represented as a2 + b2 = c2
+    
     double a2 = line2.y1 - line2.y0;
     double b2 = line2.x0 - line2.x1;
     double c2 = a2 * line2.x0 + b2 * line2.y0;
@@ -43,7 +43,7 @@ point line_intersect(line line1, line line2)
 
     if (determinant == 0)
     {
-        // Lines are parallel.
+        
         res.x = FLT_MIN;
         res.y = FLT_MIN;
 

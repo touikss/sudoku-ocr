@@ -18,7 +18,7 @@ void *Square_tovptr(Square square)
     return p;
 }
 
-// Initialization
+
 Node *initializeNode(void *value)
 {
     Node *newNode = (Node *)malloc(sizeof(Node));
@@ -50,7 +50,7 @@ void initializeMyList(MyList *list, size_t nb, void *value)
     }
 }
 
-// Getting nodes and their values
+
 Node *get_node(MyList *list, size_t index)
 {
     if (index >= list->length)
@@ -73,7 +73,7 @@ void *get_value(MyList *list, size_t index)
     return tmp->value;
 }
 
-// Insertion of node
+
 void append(MyList *list, void *value)
 {
     Node *node = initializeNode(value);
@@ -129,7 +129,7 @@ void insert(MyList *list, size_t index, void *value)
     }
 }
 
-// Removing node
+
 void *prepop(MyList *list)
 {
     if (list->head == NULL)
@@ -185,8 +185,8 @@ void *removeAt(MyList *list, size_t index)
     }
 }
 
-// Freeing memory
-// Free the memory of the node
+
+
 void free_node(Node *node)
 {
     node->next = NULL;
@@ -206,13 +206,13 @@ void free_list(MyList *list)
     }
 }
 
-// Display Node
+
 void printNode(Node node)
 {
     printf("Node: %p\n", node.value);
 }
 
-// Display List
+
 void printMyList(MyList *list)
 {
     Node *tmp = list->head;

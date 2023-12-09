@@ -18,7 +18,7 @@ double Convolution(Image *image, double kernel[3][3], int row, int col)
             }
             else 
             {
-                //r = image->pixels[row][col].r;
+                
                 sum += kernel[i][j];
             }
         }
@@ -51,8 +51,8 @@ void SobelEdgeDetection(Image *image, int threshold)
             g_px = sqrt(gx * gx + gy * gy);
 
             Pixel_Set(&image->pixels[j][i], (unsigned int)(g_px > threshold ? g_px : 0));
-            //updatePixelToSameValue(&(image->pixels[j][i]),
-              //                     (unsigned int)(g_px > 80 ? 255 : 0));
+            
+              
         }
     }
 }

@@ -12,8 +12,8 @@
 #define STRENGTH_MASK (1<<5)
 
 typedef struct {
-    double dIx;  // Partial derivative in x direction
-    double dIy;  // Partial derivative in y direction
+    double dIx;  
+    double dIy;  
     double magnitude;
     double orientation;
     int strength;

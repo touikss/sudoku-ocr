@@ -14,7 +14,7 @@ void Matrix_Print(Shape* mat[][16])
         for (int j = 0; j < 16; j ++){
             if (mat[i][j] != NULL)
                 printf("1");
-                //printf("%p", mat[i][j]);
+                
             else    
                 printf(" ");
             printf("|");
@@ -93,8 +93,8 @@ int Matrix_Push(Shape* mat[][16], Shape* shape, int* maxX, int* maxY)
     if (mat == NULL || shape == NULL)   
         Error("NULL parameter in Matrix_Push()");
 
-   // if (Matrix_Contains(mat, shape))
-     //   return;
+   
+     
 
 
     int i = 0;
@@ -106,7 +106,7 @@ int Matrix_Push(Shape* mat[][16], Shape* shape, int* maxX, int* maxY)
     int y = 0;
     int lastX = -1;
     int lastY = -1;
-    // find x
+    
 
     for (int x = 0; x < 16; x ++){
         for (y = 0; y < 16; y ++){
@@ -167,7 +167,7 @@ int Matrix_Push(Shape* mat[][16], Shape* shape, int* maxX, int* maxY)
         *maxX = i;
     
     found = 0;
-    // find y
+    
     for (int y = 0; y < 16; y ++){
         int xlast = 0;
         int xfirst = 0;
@@ -206,7 +206,7 @@ int Matrix_Push(Shape* mat[][16], Shape* shape, int* maxX, int* maxY)
         printf("Info : Matrice has been cleared in Matrix_Push().\n");
         return 1;
     }
-    //Error("Case detected out of the bounds in Matrix_Push()");
+    
 
     if (mat[j][i] == NULL || shape->size > mat[j][i]->size)
         mat[j][i] = shape;

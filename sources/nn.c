@@ -9,7 +9,7 @@
 
 #define MAXCHAR 1000
 
-// 784, 300, 10
+
 NeuralNetwork* network_create(int input, int hidden, int output, double lr) {
 	NeuralNetwork* net = malloc(sizeof(NeuralNetwork));
 	net->input = input;
@@ -26,32 +26,32 @@ NeuralNetwork* network_create(int input, int hidden, int output, double lr) {
 }
 
 void network_train(NeuralNetwork* net, Matrix* input, Matrix* output) {
-	// Feed forward
+	
 	Matrix* hidden_inputs	= dot(net->hidden_weights, input);
 	Matrix* hidden_outputs = apply(sigmoid, hidden_inputs);
 	Matrix* final_inputs = dot(net->output_weights, hidden_outputs);
 	Matrix* final_outputs = apply(sigmoid, final_inputs);
 
-	// Find errors
+	
 	Matrix* output_errors = subtract(output, final_outputs);
 	Matrix* transposed_mat = transpose(net->output_weights);
 	Matrix* hidden_errors = dot(transposed_mat, output_errors);
 	matrix_free(transposed_mat);
 
-	// Backpropogate
-	// output_weights = add(
-	//		 output_weights, 
-	//     scale(
-	// 			  net->lr, 
-	//			  dot(
-	// 		 			multiply(
-	// 						output_errors, 
-	//				  	sigmoidPrime(final_outputs)
-	//					), 
-	//					transpose(hidden_outputs)
-	// 				)
-	//		 )
-	// )
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	Matrix* sigmoid_primed_mat = sigmoidPrime(final_outputs);
 	Matrix* multiplied_mat = multiply(output_errors, sigmoid_primed_mat);
 	transposed_mat = transpose(hidden_outputs);
@@ -59,7 +59,7 @@ void network_train(NeuralNetwork* net, Matrix* input, Matrix* output) {
 	Matrix* scaled_mat = scale(net->learning_rate, dot_mat);
 	Matrix* added_mat = add(net->output_weights, scaled_mat);
 
-	matrix_free(net->output_weights); // Free the old weights before replacing
+	matrix_free(net->output_weights); 
 	net->output_weights = added_mat;
 
 	matrix_free(sigmoid_primed_mat);
@@ -68,27 +68,27 @@ void network_train(NeuralNetwork* net, Matrix* input, Matrix* output) {
 	matrix_free(dot_mat);
 	matrix_free(scaled_mat);
 
-	// hidden_weights = add(
-	// 	 net->hidden_weights,
-	// 	 scale (
-	//			net->learning_rate
-	//    	dot (
-	//				multiply(
-	//					hidden_errors,
-	//					sigmoidPrime(hidden_outputs)	
-	//				)
-	//				transpose(inputs)
-	//      )
-	// 	 )
-	// )
-	// Reusing variables after freeing memory
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	sigmoid_primed_mat = sigmoidPrime(hidden_outputs);
 	multiplied_mat = multiply(hidden_errors, sigmoid_primed_mat);
 	transposed_mat = transpose(input);
 	dot_mat = dot(multiplied_mat, transposed_mat);
 	scaled_mat = scale(net->learning_rate, dot_mat);
 	added_mat = add(net->hidden_weights, scaled_mat);
-	matrix_free(net->hidden_weights); // Free the old hidden_weights before replacement
+	matrix_free(net->hidden_weights); 
 	net->hidden_weights = added_mat; 
 
 	matrix_free(sigmoid_primed_mat);
@@ -97,7 +97,7 @@ void network_train(NeuralNetwork* net, Matrix* input, Matrix* output) {
 	matrix_free(dot_mat);
 	matrix_free(scaled_mat);
 
-	// Free matrices
+	
 	matrix_free(hidden_inputs);
 	matrix_free(hidden_outputs);
 	matrix_free(final_inputs);
@@ -110,9 +110,9 @@ void network_train_batch_imgs(NeuralNetwork* net, Img** imgs, int batch_size) {
 	for (int i = 0; i < batch_size; i++) {
 		if (i % 100 == 0) printf("Img No. %d\n", i);
 		Img* cur_img = imgs[i];
-		Matrix* img_data = matrix_flatten(cur_img->img_data, 0); // 0 = flatten to column vector
+		Matrix* img_data = matrix_flatten(cur_img->img_data, 0); 
 		Matrix* output = matrix_create(10, 1);
-		output->entries[cur_img->label][0] = 1; // Setting the result
+		output->entries[cur_img->label][0] = 1; 
 		network_train(net, img_data, output);
 		matrix_free(output);
 		matrix_free(img_data);
@@ -155,7 +155,7 @@ Matrix* network_predict(NeuralNetwork* net, Matrix* input_data) {
 
 void network_save(NeuralNetwork* net, char* file_string) {
 	mkdir(file_string, 0777);
-	// Write the descriptor file
+	
 	chdir(file_string);
 	FILE* descriptor = fopen("descriptor", "w");
 	fprintf(descriptor, "%d\n", net->input);
@@ -165,7 +165,7 @@ void network_save(NeuralNetwork* net, char* file_string) {
 	matrix_save(net->hidden_weights, "hidden");
 	matrix_save(net->output_weights, "output");
 	printf("Successfully written to '%s'\n", file_string);
-	chdir("-"); // Go back to the orignal directory
+	chdir("-"); 
 }
 
 NeuralNetwork* network_load(char* file_string) {
@@ -184,7 +184,7 @@ NeuralNetwork* network_load(char* file_string) {
 	net->hidden_weights = matrix_load("hidden");
 	net->output_weights = matrix_load("output");
 	printf("Successfully loaded network from '%s'\n", file_string);
-	chdir("-"); // Go back to the original directory
+	chdir("-"); 
 	return net;
 }
 
@@ -214,7 +214,7 @@ void perform_nn(int hexa, int res[][16]){
 	
 	Img** imgs = malloc(256 * 8);
 	NeuralNetwork* net;
-	// PREDICTIN
+	
 
 		Pos tab[256];
 
@@ -222,22 +222,22 @@ void perform_nn(int hexa, int res[][16]){
 			{tab[i].x = -1;
 			tab[i].y = -1;}
 
-		//printf("OUI\n");
-		//printf("TEST\n");
+		
+		
 		int count = 0;
 		for (int i = 0; i < 16; i ++){
 			for (int j = 0; j < 16; j ++){
 				char filename[50];
     sprintf(filename, "output/case_%x%x", i, j);
-				//printf("CASE %d%d\n", i, j);
+				
 				if (access(filename, F_OK) != -1) {
 								tab[count].x = i;
 								tab[count].y = j;
-								//printf("CASE %d%d\n", i, j);
-								//char csv[50];
-    				//sprintf(csv, "case_%x%x.csv", i, j);
-        //bmp_to_csv(filename, csv);
-								//Img ** im = csv_to_imgs("train.csv", 3);
+								
+								
+    				
+        
+								
 								imgs[count] = bmp_to_img(filename);
 								count ++;
     }
@@ -247,18 +247,18 @@ void perform_nn(int hexa, int res[][16]){
 			for (int j = 0; j < 256; j ++){
 				if (tab[j].x == -1)
 							break;
-					//matrix_print(imgs[j]->img_data);
+					
 					Matrix* prediction = network_predict_img(net, imgs[j]);
 					int pred = matrix_argmax(prediction);
 					pred = rand() % 10;
-					//printf("%d\n", pred);
+					
 					res[tab[j].x][tab[j].y] = pred;
 			}
 		if (hexa == 9)
 			printf(" ");
 	
-	 //double score = network_predict_imgs(net, imgs, number_imgs);
-	//printf("Score: %1.5f\n", score * 100);
+	 
+	
 	 imgs_free(imgs, count);
 	 network_free(net);
 

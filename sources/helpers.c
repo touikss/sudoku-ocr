@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-//#include <gdk/gdk.h>
+
 #include "../headers/helpers.h"
 
 
@@ -33,7 +33,7 @@ void insertionSort(int arr[], int n)
 /**
  * @brief Convolution operator
  *
- * @link https://en.wikipedia.org/wiki/Kernel_(image_processing)#Convolution
+ * @link https:
  *
  * @param kernel kernel of the convolution
  * @param ksize size of the kernel

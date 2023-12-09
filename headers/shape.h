@@ -5,36 +5,36 @@
 #include <math.h>
 #include <stdlib.h>
 
-/////////////////////////////////////////////////////////////////////////////////
-////////////////////////////STRUCTURES DEFINITION////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
 
-// Definition of the Point structure with integer coordinates x and y.
+
+
+
+
 typedef struct {
-    unsigned int x;  ///< X-coordinate of the point.
-    unsigned int y;  ///< Y-coordinate of the point.
+    unsigned int x;  
+    unsigned int y;  
 } Point;
 
-// Definition of the Shape structure representing a shape with various properties.
+
 typedef struct Shape{
-    int isSquare;           ///< Indicates if the shape is a square (1) or not (0).
-    int isTilted;           ///< Indicates if the shape is tilted or not (to care only if it is a square)
-    unsigned int height;    ///< Height of the shape.*/
-    unsigned int width;     ///< Width of the shape.
-    unsigned int size;      ///< Size of the shape (may represent the total number of points, for example).
-    unsigned int capacity;  ///< Initial capacity of the shape in pixels.
-    unsigned int extremum[4];        ///< Array of extremes: [0] = x min, [1] = x max, [2] = y min, [3] = y max.
-    Point descriptor[8];   ///< Array of point descriptors.
-    double averageX;        ///< Average of the X coordinates of the shape's points.
-    double averageY;        ///< Average of the Y coordinates of the shape's points.
-    Point* points;          ///< Pointer to a dynamically allocated array of points representing the shape.
-    struct Shape* next;     ///< Pointer to the next shape in a linked data structure.
+    int isSquare;           
+    int isTilted;           
+    unsigned int height;    
+    unsigned int width;     
+    unsigned int size;      
+    unsigned int capacity;  
+    unsigned int extremum[4];        
+    Point descriptor[8];   
+    double averageX;        
+    double averageY;        
+    Point* points;          
+    struct Shape* next;     
 } Shape;
 
 
-/////////////////////////////////////////////////////////////////////////////////
-////////////////////////////FUNCTIONS PROTOTYPE//////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 /** @brief Calculate the Euclidean distance between two coordinates.

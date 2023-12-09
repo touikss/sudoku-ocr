@@ -1,8 +1,8 @@
 #ifndef IMAGE_2_H
 #define IMAGE_2_H
 
-//#include <gdk/gdk.h>
-//#include <gtk/gtk.h>
+
+
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 #include <stdio.h>

@@ -9,7 +9,7 @@
 
 #include "../headers/bilinear_interpolation.h"
 #include "../headers/image.h"
-//#include "Imagery/Utils/noise_reduction.h"
+
 
 /**
  * @brief Rotate an image

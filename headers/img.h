@@ -16,7 +16,7 @@ void img_free(Img *img);
 void imgs_free(Img **imgs, int n);
 Img* bmp_to_img(char* file_string);
 
-// added
+
 typedef struct {
     uint8_t value;
 } Pixel3;

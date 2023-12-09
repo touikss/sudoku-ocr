@@ -5,9 +5,9 @@
 #include <string.h>
 
 
-/////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////    BASICS    /////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void Pixel_Set(Pixel *pixel, Uint8 value)
@@ -100,10 +100,10 @@ Image Image_CreateFromSurface(SDL_Surface *surface, unsigned int width, unsigned
     {
         for (unsigned int y = 0; y < height; y++)
         {
-            // Get pixel from surface
+            
             pixel = get_pixel(surface, x, y);
 
-            // Get RGB values from pixel
+            
             SDL_GetRGB(pixel, surface->format, &rgb.r, &rgb.g, &rgb.b);
             int val = (rgb.r + rgb.g + rgb.b) / 3;
             image.pixels[x][y].r = val;
@@ -127,25 +127,25 @@ SDL_Surface *Image_CreateSurface(Image *image)
     const unsigned int width = image->width;
     const unsigned int height = image->height;
 
-    // Create rgb surface from image
+    
     SDL_Surface *surface = SDL_CreateRGBSurface(0, width, height, 32, 0, 0, 0, 0);
 
     if (surface == NULL)
         errx(EXIT_FAILURE, "Error while creating surface in Image_CreateSurface(): %s\n", SDL_GetError()[0] == '\0'? "no error from SDL" : SDL_GetError());
 
-    // For each pixel in the source image
+    
     for (unsigned int x = 0; x < width; x++)
     {
         for (unsigned int y = 0; y < height; y++)
         {
-            // Get pixel from image
+            
             Pixel _pixel = image->pixels[x][y];
 
-            // Get pixel value for SDL
+            
             Uint32 pixel =
                 SDL_MapRGB(surface->format, _pixel.r, _pixel.g, _pixel.b);
 
-            // Put pixel in img
+            
             put_pixel(surface, x, y, pixel);
         }
     }
@@ -174,7 +174,7 @@ Pixel **Image_CopyPixelArray(Image *image)
 
 
         for (unsigned int j = 0; j < h; j++)
-        { // MEDIAN FILTER
+        { 
             mask[i][j].r = image->pixels[i][j].r;
             mask[i][j].g = image->pixels[i][j].g;
             mask[i][j].b = image->pixels[i][j].b;
@@ -219,9 +219,9 @@ void Image_Clear(Image* image)
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-////////////////////////////    MANIPULATION    /////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 Image Image_Copy(Image *image)
@@ -246,7 +246,7 @@ void Image_Save(Image *image, char *path)
     if (image == NULL || path == NULL)
         Error("NULL parameter in Image_Save()");
 
-    // Update SDL_Surface inside Image struct
+    
     SDL_Surface *surface = Image_CreateSurface(image);
 
     if (SDL_SaveBMP(surface, path) != 0)
@@ -268,7 +268,7 @@ Image Image_Crop(Image *image, SDL_Rect *rect)
     if (rect->w < 0 || rect->h < 0)
         Error("Invalid dimension in Image_Crop()");
 
-    // Allocate pixels form dimension of rect
+    
     res.pixels = malloc((rect->w + 1) * sizeof(Pixel *));
     if (res.pixels == NULL)
     {
@@ -282,7 +282,7 @@ Image Image_Crop(Image *image, SDL_Rect *rect)
             Error("Malloc error, unable to allocate memory in Image_Crop()");
     }
 
-    // Copy pixels from image to res
+    
     for (int x = rect->x; x < rect->x + rect->w; x++)
     {
         for (int y = rect->y; y < rect->y + rect->h; y++)
@@ -337,9 +337,9 @@ void Image_Clone(Image *src, Image *dst)
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-////////////////////////////      FILTERS       /////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void Image_GaussianFilter1(Image* image, int smoothness)
@@ -354,13 +354,13 @@ void Image_GaussianFilter1(Image* image, int smoothness)
 
     Image tmp = Image_CreateBlack(width, height); 
 
-    // Compute the number of pixel that we will use to compute the new pixel value
+    
     const int pixel_count = (2 * smoothness + 1) * (2 * smoothness + 1);
 
     for (int x = 0; x < width; x ++){
         for (int y = 0; y < height; y ++){
             int average = 0;
-             // Browse pixels around
+             
             for (int i = x - smoothness; i <= (x + smoothness); i ++){
                 for (int j = y - smoothness; j <= y + smoothness; j ++){
                     if (j >= 0 && i >= 0 && j < height && i < width){
@@ -369,7 +369,7 @@ void Image_GaussianFilter1(Image* image, int smoothness)
                     }
                 }
             }
-            // Compute average
+            
             average /= pixel_count;
             tmp.pixels[x][y].r = average;
             tmp.pixels[x][y].g = average;
@@ -400,10 +400,10 @@ void Image_GaussianFilter(Image* image, int smoothness)
             int sum = 0;
             int count = 0;
 
-            // Iterate over a square neighborhood
+            
             for (int i = x - smoothness; i <= x + smoothness; i++) {
                 for (int j = y - smoothness; j <= y + smoothness; j++) {
-                    // Use replication of the border
+                    
                     int px = (i < 0) ? 0 : (i >= width) ? width - 1 : i;
                     int py = (j < 0) ? 0 : (j >= height) ? height - 1 : j;
 
@@ -412,7 +412,7 @@ void Image_GaussianFilter(Image* image, int smoothness)
                 }
             }
 
-            // Compute average
+            
             if (count > 0) {
                 int average = sum / count;
                 tmp.pixels[x][y].r = average;
@@ -425,7 +425,7 @@ void Image_GaussianFilter(Image* image, int smoothness)
 
     Image_Clone(&tmp, image);
 
-    // Copy histogram directly
+    
     for (size_t i = 0; i < 256; i++) {
         image->histogram[i] = histTmp[i];
     }
@@ -487,7 +487,7 @@ void Image_ContrastFilter(Image* image, double contrastFactor, int lowThreshold,
     const unsigned int width = image->width;
     const unsigned int height = image->height;
 
-    // Calcul de l'histogramme
+    
     int histogram[256] = {0};
 
     for (unsigned int x = 0; x < width; x++)
@@ -501,7 +501,7 @@ void Image_ContrastFilter(Image* image, double contrastFactor, int lowThreshold,
             else if (val >= highThreshold)
                 val = val + exposure > 255? 255 : val + exposure;
 
-            // Set val
+            
             image->pixels[x][y].r = val;
             image->pixels[x][y].g = val;
             image->pixels[x][y].b = val;
@@ -514,7 +514,7 @@ void Image_ContrastFilter(Image* image, double contrastFactor, int lowThreshold,
 
     return;
 
-    // For each pixel of the image
+    
     for (unsigned int x = 0; x < width; x++)
     {
         for (unsigned int y = 0; y < height; y++)
@@ -525,7 +525,7 @@ void Image_ContrastFilter(Image* image, double contrastFactor, int lowThreshold,
 
     return;
 
-    // Trouver les valeurs min et max non nulles dans l'histogramme
+    
     int minVal = 0;
     int maxVal = 255;
     while (histogram[minVal] == 0 && minVal < 255) {
@@ -535,7 +535,7 @@ void Image_ContrastFilter(Image* image, double contrastFactor, int lowThreshold,
         maxVal--;
     }
 
-    // For each pixel of the image
+    
     for (unsigned int x = 0; x < width; x++)
     {
         for (unsigned int y = 0; y < height; y++)
@@ -543,7 +543,7 @@ void Image_ContrastFilter(Image* image, double contrastFactor, int lowThreshold,
             double normalized = (image->pixels[x][y].r - minVal) / (double)(maxVal - minVal);
             double adjusted = 255.0 * contrastFactor * (normalized - 0.5) + 0.5;
             int val = (adjusted < 0) ? 0 : ((adjusted > 255) ? 255 : (unsigned char)adjusted);
-            // Compute the average of the pixel
+            
             image->pixels[x][y].r = val;
             image->pixels[x][y].g = val;
             image->pixels[x][y].b = val;
@@ -555,7 +555,7 @@ void Image_ContrastFilter(Image* image, double contrastFactor, int lowThreshold,
 void Image_ThresholdFilter(Image* image, int threshold){
     if (image == NULL || threshold < 0)
         Error("Invalid parameter in Image_ThresholdFilter()");
-    // Appliquez la dilatation  
+    
     int width = image->width;
     int height = image->height;
     for (int x = 0; x < width; ++x) {
@@ -606,9 +606,9 @@ void Image_Levelize(Image* image, size_t n)
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-//////////////////////////// HISTOGRAM MANIPULATION /////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void Image_NormalizeHistogram(Image* image)
@@ -651,7 +651,7 @@ void Image_NormalizeHistogram(Image* image)
         }
     }    
 
-    // Copier les valeurs de newHist dans image->histogram
+    
     for (size_t i = 0; i < 256; i++) {
         image->histogram[i] = newHist[i];
     }
@@ -693,19 +693,19 @@ void Image_EqualizeHistogram(Image* image) {
 
     for (int i = 1; i < 255; ++i) {
         if (image->histogram[i] > image->histogram[i - 1] && image->histogram[i] > image->histogram[i + 1]) {
-            // Pic détecté
+            
             curve[j] = i;
             j ++;
         }
         else if (image->histogram[i] < image->histogram[i - 1] && image->histogram[i] < image->histogram[i + 1]) {
-            // Creu détecté
+            
             curve[j] = i;
             j ++;
         }
     }
     curve[j] = 255;
 
-     // Réinitialise l'histograme
+     
     for (size_t i = 0; i < 256; i++)
     {
         image->histogram[i] = 0;
@@ -724,9 +724,9 @@ void Image_EqualizeHistogram(Image* image) {
             int k = 0;
             while (k < 256 && curve[k] != -1){
                 if (lum < curve[k]){
-                    int val = curve[k]; // Peak
+                    int val = curve[k]; 
                     if (k % 2 == 1 && k != 0)
-                        val = curve[k - 1]; // Valley
+                        val = curve[k - 1]; 
                     pixel.r = val;
                     pixel.g = val;
                     pixel.b = val;
@@ -742,9 +742,9 @@ void Image_EqualizeHistogram(Image* image) {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////    EDGES MANIPULATION     /////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void Image_ErodeEdges(Image* image) {
@@ -752,16 +752,16 @@ void Image_ErodeEdges(Image* image) {
     if (image == NULL)
         Error("NULL parameter in Image_ErodeEdges()");
 
-    // Obtenez les dimensions de la surface
+    
     int width = image->width;
     int height = image->height;
 
     Image tmp = Image_CreateBlack(width, height);
 
-    // Appliquez l'érosion  
+    
     for (int x = 1; x < width - 1; ++x) {
         for (int y = 1; y < height - 1; ++y) {
-            // Obtenez les valeurs des pixels voisins
+            
             Uint8 p00 = image->pixels[x-1][y-1].r;
             Uint8 p01 = image->pixels[x][y-1].r; 
             Uint8 p02 = image->pixels[x+1][y-1].r; 
@@ -772,7 +772,7 @@ void Image_ErodeEdges(Image* image) {
             Uint8 p21 = image->pixels[x][y+1].r; 
             Uint8 p22 = image->pixels[x+1][y+1].r; 
 
-            // Si tous les voisins sont blancs, mettez le pixel actuel à blanc, sinon à noir
+            
             Uint8 result = ((p00 == 255) + (p01 == 255) + (p02 == 255) + (p10 == 255) + 
             (p11 == 255) * 2 + (p12 == 255) + (p20 == 255) + (p21 == 255) + (p22 == 255)) >= 7 ? 255 : 0;
 
@@ -791,16 +791,16 @@ void Image_DilateEdges(Image* image, int n) {
     if (image == NULL || n < 0)
         Error("Invalid parameter in Image_DilateEdges()");
 
-    // Obtenez les dimensions de la surface
+    
     int width = image->width;
     int height = image->height;
 
     Image tmp = Image_CreateBlack(width, height);
 
-    // Appliquez l'érosion  
+    
     for (int x = 1; x < width - 1; ++x) {
         for (int y = 1; y < height - 1; ++y) {
-            // Obtenez les valeurs des pixels voisins
+            
             int count = 0;
             for (int i = x-n; i <= x + n; i++)
             {
@@ -822,9 +822,9 @@ void Image_DilateEdges(Image* image, int n) {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-////////////////////////////      DRAW       ////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void Image_DrawPoint(Image* image, Point point, Color color, int thickness)
@@ -991,9 +991,9 @@ void Image_DrawMatrix(Image* image, Shape* mat[][16])
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-////////////////////////////   MASS DETECTION    ////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void Image_LabelComponent(Image* image, ShapeTab* shapeTab) 
@@ -1003,12 +1003,12 @@ void Image_LabelComponent(Image* image, ShapeTab* shapeTab)
 
     const int width = image->width;
     const int height = image->height;
-    int label = 1; // Étiquette pour la première région
+    int label = 1; 
 
     Image res = Image_CreateBlack(width, height);
     
-    // Tableau pour stocker les pixels à explorer
-    Point* stack = (Point*)calloc(width * height * 3, sizeof(Point)); // WTF?? normalement ca devrait marcher sans le *2 mais bon...
+    
+    Point* stack = (Point*)calloc(width * height * 3, sizeof(Point)); 
     if (stack == NULL)
         Error("Malloc error, unable to allocate memory in Image_LabelComponent()");
 
@@ -1016,23 +1016,23 @@ void Image_LabelComponent(Image* image, ShapeTab* shapeTab)
     {
         for (int y = 0; y < height; y++) 
         {
-            // Si le pixel n'a pas encore été visité et est blanc
+            
             if (res.pixels[x][y].r == 0 && image->pixels[x][y].r == 255) 
             {
                 Shape* currentShape = Shape_Create(width * height/100, width, height);
                 
-                // Empilez le pixel
+                
                 stack[0].x = x;
                 stack[0].y = y;
                 int stackSize = 1;
                 
-                // Démarrez une nouvelle région avec une nouvelle étiquette
+                
                 label += 1 + tan(label) * 100;
                 int r = 100;
                 int g = (int)(0.5 * 255.0 - label * (1.0 + sin((x + y) * M_PI / (width + height)))) % 256;
                 int b = (int)(0.5 * label * (1.0 + tan((x + y) * M_PI / (width + height)))) % 256;
                 
-                // Parcourez la pile
+                
                 while (stackSize > 0) 
                 {
                     
@@ -1040,12 +1040,12 @@ void Image_LabelComponent(Image* image, ShapeTab* shapeTab)
                     int currentX = currentPixel.x;
                     int currentY = currentPixel.y;
                     
-                    // Étiquetez le pixel avec l'étiquette actuelle
+                    
                     res.pixels[currentX][currentY].r = r;
                     res.pixels[currentX][currentY].g = g;
                     res.pixels[currentX][currentY].b = b;
                     
-                    // Parcourez les voisins du pixel
+                    
                     for (int dx = -1; dx <= 1; dx++) 
                     {
                         for (int dy = -1; dy <= 1; dy++) 
@@ -1053,13 +1053,13 @@ void Image_LabelComponent(Image* image, ShapeTab* shapeTab)
                             int nx = currentX + dx;
                             int ny = currentY + dy;
 
-                            // Si le voisin est dans les limites de l'image et est blanc
+                            
                             if (nx >= 0 && nx < width && ny >= 0 && ny < height &&
                                 res.pixels[nx][ny].r == 0 && image->pixels[nx][ny].r == 255) 
                                 {
-                                // Ajouter le point à la shape
+                                
                                 Shape_AddPoint(currentShape, currentX, currentY);
-                                // Empilez le voisin
+                                
                                 stack[stackSize].x = nx;
                                 stack[stackSize].y = ny;
                                 stackSize += 1;
@@ -1072,7 +1072,7 @@ void Image_LabelComponent(Image* image, ShapeTab* shapeTab)
         }
     }
     
-    // Libérez la mémoire utilisée par la pile
+    
     free(stack);
     Image_Clone(&res, image);
     Image_Free(&res);
@@ -1086,10 +1086,10 @@ void Image_FindSquareInLabeled(Image* image)
 
     int width = image->width;
     int height = image->height;
-    int label = 1; // Étiquette pour la première région
+    int label = 1; 
 
     Image res = Image_CreateBlack(width, height);
-    // Tableau pour stocker les pixels à explorer
+    
     Point* stack = malloc(width * height * sizeof(Point));
     if (stack == NULL)
         Error("Malloc error, unable to allocate memory in Image_FindSquareInLabeled()");
@@ -1102,9 +1102,9 @@ void Image_FindSquareInLabeled(Image* image)
     }
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
-            // Si le pixel n'a pas encore été visité et est blanc
+            
             if (res.pixels[x][y].r == 0 && image->pixels[x][y].r == 255) {
-                // Empilez le pixel
+                
                 stack[0].x = x;
                 stack[0].y = y;
                 int stackSize = 1;
@@ -1112,28 +1112,28 @@ void Image_FindSquareInLabeled(Image* image)
                 stack_square[0].y = y;
                 int stack_squareSize = 1;
 
-                int minX = x; // Coordonnées du point min
+                int minX = x; 
                 int minY = y;
-                double minDist = CoordinateDistance(0,0,x,y); // Distance minimale
-                int maxX = x; // Coordonnées du point max
+                double minDist = CoordinateDistance(0,0,x,y); 
+                int maxX = x; 
                 int maxY = y;
                 double maxDist = minDist;
-                double formHeight = 0; // Dimensions de la forme
+                double formHeight = 0; 
                 double formWidth = 0;
-                // Démarrez une nouvelle région avec une nouvelle étiquette
+                
                 label += 1 + tan(label) * 100;
                 int r = (int)(0.5 * label + 255.0 * (1.0 + cos((x + y) * M_PI / (width + height)))) % 256;
                 int g = (int)(0.5 * 255.0 - label * (1.0 + sin((x + y) * M_PI / (width + height)))) % 256;
                 int b = (int)(0.5 * label * (1.0 + tan((x + y) * M_PI / (width + height)))) % 256;
                 if (r <= 0)
                     r = 120;
-                // Parcourez la pile
+                
                 while (stackSize > 0) {
                     Point currentPixel = stack[--stackSize];
                     int currentX = currentPixel.x;
                     int currentY = currentPixel.y;
                     double currentDist = CoordinateDistance(0,0,currentX,currentY);
-                    if (currentDist < minDist){ // Vérifier min dist et max dist
+                    if (currentDist < minDist){ 
                         minDist = currentDist;
                         minX = currentX;
                         minY = currentY;
@@ -1144,29 +1144,29 @@ void Image_FindSquareInLabeled(Image* image)
                         maxY = currentY;
                     }
 
-                    // Étiquetez le pixel avec l'étiquette actuelle
+                    
                     res.pixels[currentX][currentY].r = r;
                     res.pixels[currentX][currentY].g = g;
                     res.pixels[currentX][currentY].b = b;
-                    // Parcourez les voisins du pixel
+                    
                     for (int dx = -1; dx <= 1; ++dx) {
                         for (int dy = -1; dy <= 1; ++dy) {
                             int nx = currentX + dx;
                             int ny = currentY + dy;
 
-                            // Si le voisin est dans les limites de l'image et est blanc
+                            
                             if (nx >= 0 && nx < width && ny >= 0 && ny < height &&
                                 res.pixels[nx][ny].r == 0 && image->pixels[nx][ny].r == 255) {
-                                // Empilez le voisin
+                                
                                 stack[stackSize].x = nx;
                                 stack[stackSize].y = ny;
-                                //stack_square[stack_squareSize].x = nx;
-                                //stack_square[stack_squareSize].y = ny;
+                                
+                                
                                 stackSize += 1;
-                                //stack_squareSize += 1;
+                                
                                 if (stackSize >= height){
-                                    //printf("SIIIIZE = %d\n", width * height);
-                                    //printf("WESH FRERO : %d\n", stackSize);
+                                    
+                                    
                                 }
                             }
                         }
@@ -1177,25 +1177,25 @@ void Image_FindSquareInLabeled(Image* image)
                 formHeight = sin(angle) * (maxDist - minDist);
                 printf("HEIGHT = %.2f, WIDTH = %.2f, RAPPORT = %f", formHeight, formWidth, ScaleFactor(formHeight, formWidth));
                 if ( formWidth != 0 && ScaleFactor(formHeight, formWidth) < 0.2 && formWidth > 100){
-                    // Parcourez la pile
+                    
                     printf(" CARRÉ DANS L'AXE!");
                     while (stack_squareSize > 0) {
                         Point currentPixel = stack_square[--stack_squareSize];
                         int currentX = currentPixel.x;
                         int currentY = currentPixel.y;
-                        // Étiquetez le pixel avec l'étiquette actuelle
+                        
                         res.pixels[currentX][currentY].r = 255;
                         res.pixels[currentX][currentY].g = 255;
                         res.pixels[currentX][currentY].b = 255;
                     }
                 }
                 else {
-                    // Parcourez la pile
+                    
                     while (stack_squareSize > 0) {
                         Point currentPixel = stack_square[--stack_squareSize];
                         int currentX = currentPixel.x;
                         int currentY = currentPixel.y;
-                        // Étiquetez le pixel avec l'étiquette actuelle
+                        
                         image->pixels[currentX][currentY].r = 255;
                         image->pixels[currentX][currentY].g = 255;
                         image->pixels[currentX][currentY].b = 255;
@@ -1209,7 +1209,7 @@ void Image_FindSquareInLabeled(Image* image)
         }
     }
 
-    // Libérez la mémoire utilisée par la pile
+    
     free(stack);
     free(stack_square);
     Image_Clone(&res, image);
@@ -1229,10 +1229,10 @@ void Image_RectCase(Image* image){
     if (stack == NULL)
         Error("Malloc error, unable to allocate memory in findCases()");
     Point dim[4] = {
-    {0, height}, // Première dimension
-    {0, 0}, // Deuxième dimension
-    {width, 0}, // Troisième dimension
-    {0, 0}  // Quatrième dimension
+    {0, height}, 
+    {0, 0}, 
+    {width, 0}, 
+    {0, 0}  
     };
     if (stack == NULL) {
         fprintf(stderr, "Erreur lors de l'allocation de mémoire pour la pile.\n");
@@ -1240,7 +1240,7 @@ void Image_RectCase(Image* image){
     }
     for (unsigned int x = 0; x < width; x++) {
         for (unsigned int y = 0; y < height; y++) {
-            // Si le pixel n'a pas encore été visité et est blanc
+            
             if (res.pixels[x][y].r == 0 && image->pixels[x][y].r == 255) {
                 dim[0].y = (y < dim[0].y) ? y : dim[0].y;
                 dim[1].y = (y > dim[1].y) ? y : dim[1].y;
@@ -1267,7 +1267,7 @@ void Image_UpdateHistogram(Image* image)
 void Image_HighPassFilter(Image* image, int threshold){
     if (image == NULL || threshold < 0)
         Error("Invalid parameter in Image_ThresholdFilter()");
-    // Appliquez la dilatation  
+    
     int width = image->width;
     int height = image->height;
     for (int x = 0; x < width; ++x) {

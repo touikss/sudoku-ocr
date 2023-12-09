@@ -1,9 +1,9 @@
 #include "../headers/shape_tab.h"
 
 
-/////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  BASICS  /////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 ShapeTab* ShapeTab_Create(int capacity)
@@ -97,7 +97,7 @@ void ShapeTab_RemoveShape(ShapeTab* tab, Shape* shape, int free)
 
     previous->next = current->next;
     if (current == tab->grid)
-        tab->grid = NULL;    // Oulah, pas sur sur de ca...
+        tab->grid = NULL;    
     if (free != 0)
         Shape_Free(current);
     tab->size --;
@@ -158,9 +158,9 @@ void ShapeTab_RemoveAtIndex(ShapeTab* tab, int index, int free)
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////   SORT   /////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 Shape* ShapeTab_GetBiggestShape(ShapeTab* tab)
@@ -284,7 +284,7 @@ int ShapeTab_ContainsSimilar(ShapeTab* tab, Shape* shape)
 
     for (Shape* current = tab->data->next; current; current = current->next)
     {
-        // Check if shape is in the current bounderies
+        
         if (shape->averageX > current->extremum[0] && shape->averageX < current->extremum[1]  
         && shape->averageY > current->extremum[2]  && shape->averageY < current->extremum[3]
         && Point_Distance((Point){shape->averageX, shape->averageY}, (Point){current->averageX, current->averageY}) < tab->averageW / 2)
@@ -341,9 +341,9 @@ void ShapeTab_RemoveInconsistency(ShapeTab* tab, Shape* grid, double factor)
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////  DISPLAY INFORMATION  ///////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void ShapeTab_Print(ShapeTab* tab, Shape* shape)
@@ -399,9 +399,9 @@ void ShapeTab_PrintShapes(ShapeTab* tab)
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////   UPDATE VALUES   ///////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void ShapeTab_ComputeAverage(ShapeTab* tab, Shape* toExclude)

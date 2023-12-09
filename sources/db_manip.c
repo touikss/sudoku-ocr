@@ -28,17 +28,17 @@ void removeFirstNLines(const char *inputFileName, const char *outputFileName, si
     size_t lineSize = 0;
     size_t lineCount = 0;
 
-    // Parcourir ligne par ligne la base de données et copier les lignes dans le fichier de sortie
+    
     while (getline(&line, &lineSize, inputFile) != -1) {
         lineCount++;
 
-        // Écrire les lignes dans le fichier de sortie seulement si elles ne font pas partie des premières N lignes
+        
         if (lineCount > n) {
             fputs(line, outputFile);
         }
     }
 
-    // Libérer la mémoire allouée par getline
+    
     free(line);
 
     fclose(inputFile);
@@ -61,9 +61,9 @@ void shuffleDatabase(const char *inputFileName, const char *outputFileName) {
 
     char **lines = NULL;
     size_t lineCount = 0;
-    size_t maxLines = 1000; // Choisissez une valeur appropriée pour votre cas, par exemple 1000
+    size_t maxLines = 1000; 
 
-    // Allouer de l'espace pour le tableau de pointeurs de lignes
+    
     lines = (char **)malloc(maxLines * sizeof(char *));
     if (lines == NULL) {
         fprintf(stderr, "Erreur d'allocation de mémoire.\n");
@@ -75,9 +75,9 @@ void shuffleDatabase(const char *inputFileName, const char *outputFileName) {
     char *line = NULL;
     size_t lineSize = 0;
 
-    // Lire les lignes dans un tableau
+    
     while (getline(&line, &lineSize, inputFile) != -1) {
-        // Allouer de l'espace pour chaque ligne
+        
         lines[lineCount] = (char *)malloc((lineSize + 1) * sizeof(char));
         if (lines[lineCount] == NULL) {
             fprintf(stderr, "Erreur d'allocation de mémoire pour la ligne %zu.\n", lineCount);
@@ -91,11 +91,11 @@ void shuffleDatabase(const char *inputFileName, const char *outputFileName) {
             exit(EXIT_FAILURE);
         }
 
-        // Copier la ligne lue dans le tableau
+        
         strcpy(lines[lineCount], line);
         lineCount++;
 
-        // Si on atteint la taille maximale, augmenter la taille du tableau
+        
         if (lineCount >= maxLines) {
             maxLines *= 2;
             lines = realloc(lines, maxLines * sizeof(char *));
@@ -109,28 +109,28 @@ void shuffleDatabase(const char *inputFileName, const char *outputFileName) {
         }
     }
 
-    // Libérer la mémoire allouée par getline
+    
     free(line);
 
-    // Initialiser le générateur de nombres aléatoires avec une graine basée sur l'heure actuelle
+    
     srand((unsigned int)time(NULL));
 
-    // Appliquer l'algorithme de Fisher-Yates pour mélanger les lignes
+    
     for (size_t i = lineCount - 1; i > 0; i--) {
         size_t j = rand() % (i + 1);
 
-        // Échanger les lignes i et j
+        
         char *temp = lines[i];
         lines[i] = lines[j];
         lines[j] = temp;
     }
 
-    // Écrire les lignes mélangées dans le fichier de sortie
+    
     for (size_t i = 0; i < lineCount; i++) {
         fputs(lines[i], outputFile);
     }
 
-    // Libérer la mémoire allouée
+    
     for (size_t i = 0; i < lineCount; i++) {
         free(lines[i]);
     }
@@ -157,14 +157,14 @@ void cloneDatabase(const char *inputFileName, const char *outputFileName) {
     char *line = NULL;
     size_t lineSize = 0;
 
-    // Parcourir ligne par ligne la base de données et copier dans le fichier de sortie
+    
     while (getline(&line, &lineSize, inputFile) != -1) {
         char *comma = strchr(line, ',') + 1;
         if (isdigit(comma[0]))
             fputs(comma, outputFile);
     }
 
-    // Libérer la mémoire allouée par getline
+    
     free(line);
 
     fclose(inputFile);
@@ -183,12 +183,12 @@ void mergeDatabases(const char *inputFile1, const char *inputFile2, const char *
 
     char line[MAX_LINE_LENGTH];
 
-    // Fusionner les données du premier fichier
+    
     while (fgets(line, sizeof(line), file1) != NULL) {
         fputs(line, output);
     }
 
-    // Fusionner les données du deuxième fichier
+    
     while (fgets(line, sizeof(line), file2) != NULL) {
         fputs(line, output);
     }
@@ -212,30 +212,30 @@ int compareDatabases(const char *file1, const char *file2) {
     int lineNumber = 1;
 
     while (fgets(line1, sizeof(line1), db1) != NULL && fgets(line2, sizeof(line2), db2) != NULL) {
-        // Comparer les lignes
+        
         if (strcmp(line1, line2) != 0) {
             printf("Différence détectée à la ligne %d.\n", lineNumber);
             fclose(db1);
             fclose(db2);
-            return 0;  // Les bases de données ne sont pas égales
+            return 0;  
         }
 
         lineNumber++;
     }
 
-    // Vérifier si l'une des bases de données a plus de lignes que l'autre
+    
     if (fgets(line1, sizeof(line1), db1) != NULL || fgets(line2, sizeof(line2), db2) != NULL) {
         printf("Les bases de données n'ont pas le même nombre de lignes.\n");
         fclose(db1);
         fclose(db2);
-        return 0;  // Les bases de données ne sont pas égales
+        return 0;  
     }
 
     printf("Les bases de données sont égales.\n");
 
     fclose(db1);
     fclose(db2);
-    return 1;  // Les bases de données sont égales
+    return 1;  
 }
 
 void parseDatabase(const char *inputFileName, const char *outputFileName) {
@@ -255,14 +255,14 @@ void parseDatabase(const char *inputFileName, const char *outputFileName) {
     char *line = NULL;
     size_t lineSize = 0;
 
-    // Parcourir ligne par ligne la base de données et copier dans le fichier de sortie
+    
     while (getline(&line, &lineSize, inputFile) != -1) {
         char *comma = strchr(line, ',') + 1;
         if (isdigit(comma[0]))
             fputs(comma, outputFile);
     }
 
-    // Libérer la mémoire allouée par getline
+    
     free(line);
 
     fclose(inputFile);
@@ -286,9 +286,9 @@ void letterDatabase(const char *inputFileName, const char *outputFileName) {
     char *line = NULL;
     size_t lineSize = 0;
 
-    // Parcourir ligne par ligne la base de données et copier dans le fichier de sortie
+    
     while (getline(&line, &lineSize, inputFile) != -1) {
-        char *comma = line;//strchr(line, ',') + 1;
+        char *comma = line;
         if (comma[1] == ',' && (comma[0] == '0' || comma[0] == '1' || comma[0] == '2' || comma[0] == '3' ||
         comma[0] == '4' || comma[0] == '5')){
             comma[0] += 17;
@@ -296,7 +296,7 @@ void letterDatabase(const char *inputFileName, const char *outputFileName) {
         }
     }
 
-    // Libérer la mémoire allouée par getline
+    
     free(line);
 
     fclose(inputFile);
@@ -322,13 +322,13 @@ void copyFirstNLines(const char *inputFileName, const char *outputFileName, size
     size_t lineSize = 0;
     size_t lineCount = 0;
 
-    // Parcourir ligne par ligne la base de données et copier les premières N lignes dans le fichier de sortie
+    
     while (lineCount < n && getline(&line, &lineSize, inputFile) != -1) {
         fputs(line, outputFile);
         lineCount++;
     }
 
-    // Libérer la mémoire allouée par getline
+    
     free(line);
 
     fclose(inputFile);
@@ -346,7 +346,7 @@ int main(int argc, char** argv) {
     const char *input2FileName = argc > 3? argv[3] :"./data/mnist_train.csv";
     const char *outputFileName = argc > 4? argv[4] :"output.csv";
 
-    //printf("S = %s\n", outputFileName);
+    
 
     if (strcmp(argv[1], "equal") == 0){
         if (compareDatabases(input1FileName, input2FileName)) {
@@ -393,7 +393,7 @@ int main(int argc, char** argv) {
 }*/
 
 
-//mnist_train.csv
-//94_character_TMNIST
+
+
 
 

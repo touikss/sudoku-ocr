@@ -1,9 +1,9 @@
 #include "../headers/shape.h"
 
 
-/////////////////////////////////////////////////////////////////////////////////
-///////////////////////AUXILARY FUNCTIONS DEFINITION/////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 double CoordinateDistance(int x1, int y1, int x2, int y2) {
@@ -30,15 +30,15 @@ double PointAngle(int x1, int y1, int x2, int y2)
 {
     if (y2 - y1 == 0 && x2 - x1 == 0)
         return NAN;
-    //Error("NULL vector in PointAngle()");
-    //printf("ATAN2 = %lf\n", atan2(y2 - y1, x2 - x1));
+    
+    
     return atan2(y2 - y1, x2 - x1);
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////
-////////////////////////////FUNCTIONS DEFINITION/////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 Shape* Shape_Create(int capacity, int maxWidth, int maxHeight)
@@ -94,7 +94,7 @@ void Shape_AddPoint(Shape* shape, unsigned int x, unsigned int y)
     if (shape == NULL)
         Error("NULL parameter in Shape_AddPoint");
     
-    // Increase capacity if needed
+    
     if (shape->size >= shape->capacity)
     {
         shape->capacity *= 1.5;
@@ -143,7 +143,7 @@ int Shape_IsIncluded(Shape* container, Shape* content)
 
 void Shape_ComputeDescriptors(Shape* shape)
 {
-    // Ref points
+    
     Point refPoints[4] = {
         {shape->extremum[0], shape->extremum[2]},
         {shape->extremum[0], shape->extremum[3]},
@@ -232,7 +232,7 @@ void Shape_UpdateIsSquare(Shape* shape)
     if (shape == NULL)
         Error("NULL parameter in Shape_UpdateIsSquare()");
 
-    // Check if descriptors are already updated
+    
     for (int i = 0; i < 8; i ++){
         if (shape->descriptor[i].x == 0 && shape->descriptor[i].x == 0){
             Shape_ComputeDescriptors(shape);
@@ -245,18 +245,18 @@ void Shape_UpdateIsSquare(Shape* shape)
         Error("Descriptor undefined in Shape_UpdateIsSquare()");
     }*/
 
-    double dist02 = Point_Distance(shape->descriptor[0], shape->descriptor[2]); // bas gauche bas droite
-    double dist21 = Point_Distance(shape->descriptor[2], shape->descriptor[1]); // bas droite haut droite
-    double dist13 = Point_Distance(shape->descriptor[1], shape->descriptor[3]); // haut droite haut gauche
-    double dist30 = Point_Distance(shape->descriptor[3], shape->descriptor[0]); // bas gauche haut gauche
+    double dist02 = Point_Distance(shape->descriptor[0], shape->descriptor[2]); 
+    double dist21 = Point_Distance(shape->descriptor[2], shape->descriptor[1]); 
+    double dist13 = Point_Distance(shape->descriptor[1], shape->descriptor[3]); 
+    double dist30 = Point_Distance(shape->descriptor[3], shape->descriptor[0]); 
 
-    double dist45 = Point_Distance(shape->descriptor[4], shape->descriptor[5]); // bas gauche bas droite
-    double dist57 = Point_Distance(shape->descriptor[5], shape->descriptor[7]); // bas droite haut droite
-    double dist76 = Point_Distance(shape->descriptor[7], shape->descriptor[6]); // haut droite haut gauche
-    double dist64 = Point_Distance(shape->descriptor[6], shape->descriptor[4]); // bas gauche haut gauche
+    double dist45 = Point_Distance(shape->descriptor[4], shape->descriptor[5]); 
+    double dist57 = Point_Distance(shape->descriptor[5], shape->descriptor[7]); 
+    double dist76 = Point_Distance(shape->descriptor[7], shape->descriptor[6]); 
+    double dist64 = Point_Distance(shape->descriptor[6], shape->descriptor[4]); 
     
-    int tiltedSquare = AreEquals(dist02, dist13, dist21, dist30, 0.13); // 1 si il est penché et que c'est un carré
-    int normalSquare = AreEquals(dist45, dist57, dist64, dist76, 0.13); // 1 si il est pas penché et que c'est un carré
+    int tiltedSquare = AreEquals(dist02, dist13, dist21, dist30, 0.13); 
+    int normalSquare = AreEquals(dist45, dist57, dist64, dist76, 0.13); 
 
     if (tiltedSquare || normalSquare)
         shape->isSquare = 1;

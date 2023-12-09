@@ -24,7 +24,7 @@ void deleteFilesInDirectory(const char *directoryPath) {
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        // Ignorer les entrées spéciales "." et ".."
+        
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             char filePath[PATH_MAX];
             snprintf(filePath, sizeof(filePath), "%s/%s", directoryPath, entry->d_name);
@@ -149,7 +149,7 @@ void Image_Rotate(Image *image, double angle)
     int width = image->width;
     int height = image->height;
     Image out = Image_CreateBlack(image->width, image->height);
-    //Image out = Image_Copy(image);
+    
     for (int x = 0; x < width; x++)
     {
         for (int y = 0; y < height; y++)
@@ -200,7 +200,7 @@ void Image_Rotate2(Image *image, double angle)
     int width = image->width;
     int height = image->height;
     Image out = Image_CreateBlack(image->width, image->height);
-    //Image out = Image_Copy(image);
+    
     for (int x = 0; x < width; x++)
     {
         for (int y = 0; y < height; y++)
@@ -262,8 +262,8 @@ Image Image_Resize28(Image *original) {
             for (int x = startX; x < endX; x ++){
                 for (int y = startY; y < endY; y ++){
                     sum += original->pixels[x][y].r;
-                    //sum += original->pixels[x][y].g;
-                    //sum += original->pixels[x][y].b;
+                    
+                    
                     count ++;
                 }
             }
@@ -281,68 +281,68 @@ Image Image_Resize28(Image *original) {
 }
 
 void createAndWriteToFile(int hexa) {
-    // Nom du fichier
+    
     const char *fileName = "./tmp/hexa.txt";
 
-    // Ouvrir le fichier en mode écriture
+    
     FILE *file = fopen(fileName, "w");
 
-    // Vérifier si le fichier est ouvert avec succès
+    
     if (file != NULL) {
-        // Écrire "1" dans le fichier
+        
         if (hexa == 1)
             fprintf(file, "1");
         else
             fprintf(file, "0");
-        // Fermer le fichier
+        
         fclose(file);
 
-        //printf("Fichier créé et écrit avec succès.\n");
+        
     } else {
-        // Gérer l'erreur si l'ouverture du fichier a échoué
-        //perror("Erreur lors de l'ouverture du fichier");
+        
+        
     }
 }
 
 int verifieEtSupprime(const char *nomFichier) {
-    // Ouvre le fichier en mode lecture
+    
     FILE *fichier = fopen(nomFichier, "r");
 
-    // Vérifie si le fichier a été ouvert avec succès
+    
     if (fichier == NULL) {
         perror("Erreur lors de l'ouverture du fichier");
-        return -1;  // Code d'erreur
+        return -1;  
     }
 
-    // Lit le premier caractère
+    
     int premierCaractere = fgetc(fichier);
 
-    // Ferme le fichier
+    
     fclose(fichier);
 
-    // Vérifie si le premier caractère est '1'
+    
     if (premierCaractere == '1') {
-        // Supprime le fichier
+        
         if (remove(nomFichier) != 0) {
             perror("Erreur lors de la suppression du fichier");
-            return -1;  // Code d'erreur
+            return -1;  
         }
 
-        return 1;  // Le premier caractère est '1', fichier supprimé
+        return 1;  
     } else {
-        return 0;  // Le premier caractère n'est pas '1', fichier non supprimé
+        return 0;  
     }
 }
 
 SDL_Surface* draw_sudoku_grid(SDL_Surface* surface, int sudoku_grid[][16], int size) {
     
     if (TTF_Init() == -1) {
-    // Gestion de l'erreur
+    
         fprintf(stderr, "Erreur d'initialisation de SDL_ttf : %s\n", TTF_GetError());
-    // Gérer l'erreur selon les besoins de votre application
-    // ...
+    
+    
     }else {
-        //printf("Police chargée avec succès\n");
+        
     }
 
     /*char cwd[1024];
@@ -353,66 +353,66 @@ SDL_Surface* draw_sudoku_grid(SDL_Surface* surface, int sudoku_grid[][16], int s
 
     TTF_Font* font = TTF_OpenFont("res/font.ttf", 20);
     if (font == NULL) {
-        // Gestion de l'erreur
+        
         fprintf(stderr, "Erreur de chargement de la police : %s\n", TTF_GetError());
-        // Gérer l'erreur selon les besoins de votre application
-        // ...
+        
+        
     }
     
-    // Vérifier que la surface n'est pas nulle
+    
     if (surface == NULL || sudoku_grid == NULL) {
         return NULL;
     }
 
-    // Obtenir la largeur et la hauteur de la surface
+    
     int width = surface->w;
     int height = surface->h;
 
-    // Calculer la taille d'une cellule en fonction de la taille de la grille et de la surface
+    
     int cell_size = width / size;
 
-    // Initialiser la couleur blanche pour les lignes
+    
     Uint32 white = SDL_MapRGB(surface->format, 255, 255, 255);
 
-    // Dessiner les lignes verticales et horizontales de la grille
+    
     for (int i = 0; i <= size; i++) {
-        // Dessiner les lignes horizontales
+        
         SDL_Rect horizontal_line = {0, i * cell_size, width, 3};
         SDL_FillRect(surface, &horizontal_line, white);
 
-        // Dessiner les lignes verticales
+        
         SDL_Rect vertical_line = {i * cell_size, 0, 3, height};
         SDL_FillRect(surface, &vertical_line, white);
     }
 
-    // Dessiner les chiffres dans les cellules
+    
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            // Ignorer les cellules vides (avec la valeur 0)
+            
             if (sudoku_grid[i][j] != 0) {
-                // Convertir l'entier en chaîne de caractères
+                
                 char digit[2];
                 snprintf(digit, sizeof(digit), "%d", sudoku_grid[i][j]);
 
-                // Créer une surface de texte avec une police de base
-                SDL_Color text_color = {255, 255, 255, 255};  // Noir
+                
+                SDL_Color text_color = {255, 255, 255, 255};  
                 SDL_Surface* text_surface = TTF_RenderText_Solid(font, digit, text_color);
 
-                 //Positionner la surface de texte au centre de la cellule
+                 
                 SDL_Rect text_position = {
                     i * cell_size + (cell_size - text_surface->w) / 2,
                     j * cell_size + (cell_size - text_surface->h) / 2,
                     0,
                     0};
-                //printf("Position du texte : x = %d, y = %d, largeur = %d, hauteur = %d\n",
-                  //  text_position.x, text_position.y, text_surface->w, text_surface->h);
+                
+                  
 
-                //printf("i = %d, j = %d, valeur = %d\n", i, j, sudoku_grid[i][j]);
+                
 
-                // Dessiner la surface de texte sur la surface principale
+                
                 SDL_BlitSurface(text_surface, NULL, surface, &text_position);
 
-                // Libérer la surface de texte
+                
                 SDL_FreeSurface(text_surface);
             }
         }
@@ -435,7 +435,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
     if (surface == NULL)
         Error("NULL parameter in ApplyCannyFilter");
 
-    //Image image = Image_CreateFromSurface(surface, surface->w, surface->h);
+    
     Image copy = Image_CreateFromSurface(surface, surface->w, surface->h);
 
     ShapeTab* verified = ShapeTab_Create(70);
@@ -447,7 +447,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
     int iteration = 0;
     int filter = 1;
     int prev = 0;
-    //int bestFilter = 0;
+    
 
     for (filter = 1;detected != 1 && filter < 4; filter++)
     {
@@ -457,11 +457,11 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
 
         if (len > prev){
             prev = len;
-            //bestFilter = filter;
+            
         }
 
         if (filter == 3){
-            // Copy matrice in matrice 2
+            
             for (int i = 0; i < 16; i ++){
                 for (int j = 0; j < 16; j ++){
                     matrice2[i][j] = matrice[i][j];
@@ -482,7 +482,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
 
                 if ((h == 9 || h == 16 || w == 9 || w == 16 ) && Matrix_Count(matrice) > Matrix_Count(matrice3))
                 {
-                    // Copy matrice in matrice 3
+                    
                     for (int i = 0; i < 16; i ++){
                         for (int j = 0; j < 16; j ++){
                             matrice3[i][j] = matrice[i][j];
@@ -521,7 +521,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
             if (shapes->data->next){
                 Shape* grid = ShapeTab_GetBiggestShape(shapes);
                 Shape_ComputeDescriptors(grid);
-                //printf("ANGLE GRID = %lf\n", Shape_ComputeAngle(grid) * 180 / M_PI);
+                
                 ShapeTab_ComputeAverage(shapes, grid);
                 ShapeTab_ComputeStandardDeviation(shapes, grid);
                 ShapeTab_RemoveInconsistency(shapes, grid, 2);
@@ -562,7 +562,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         }
     }
 
-    // Keep the best matrix
+    
     if (Matrix_Count(matrice2) > Matrix_Count(matrice)){
         for (int i = 0; i < 16; i ++){
             for (int j = 0; j < 16; j ++){
@@ -602,7 +602,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
     if (!detected)
         return NULL;
 
-    //printf("HEXA = %d\n", hexa);
+    
 
     if (detected){
         char* path = (char*)malloc(40); 
@@ -622,7 +622,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         if (titled > 40){
             a /= titled;
             Image_Rotate(&origin, a - M_PI_2 * 3);
-            //Image_Save(&origin, "ROTATED");
+            
         }
 
         Image_UpdateHistogram(&origin);
@@ -666,9 +666,9 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                         unsigned int new_y = (int)floor(new_y_float);
                         rect.x = new_x - width/2;
                         rect.y = new_y - height/2;
-                        //Image_Rotate(&caseImage, angle - M_PI_2 * 3);
+                        
 
-                        //Image_DrawPoint(&origin, (Point){new_x, new_y}, RED, 3);
+                        
                     }
 
                     snprintf(path, 20, "output/case_%x%x", i, j);
@@ -676,14 +676,14 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                     Image caseImage = Image_Crop(&origin, &rect);
 
                     
-                    //ApplyPreProcess(&caseImage, bestFilter, 1, CASE);
+                    
 
                     Image_UpdateHistogram(&caseImage);
-                    //Image_SmoothHistogram(&caseImage, 20);
-                    //Image_EqualizeHistogram(&caseImage);
-                    //Image_Save(&caseImage, path);
                     
-                    //Image_ContrastFilter(&caseImage, 1.2, 80, 100, 40);  
+                    
+                    
+                    
+                    
 
                     Image resized = Image_Resize28(&caseImage);
                     Image copy = Image_Copy(&resized);
@@ -692,8 +692,8 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                     Image_HighPassFilter(&copy, 150);
                     Image_LabelComponent(&copy, tab);
                     Image_ThresholdFilter(&resized, 100);
-                    //Image_ThresholdFilter(&resized, 100);
-                    //Image_Invert(&resized);
+                    
+                    
 
                     if (tab->size > 0){
                         Shape* shape = tab->data->next;
@@ -710,25 +710,25 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                         Image_Save(&fin, path);}
                         Image_Save(&resized, path);
                     }
-                    //int thresh = 200;
+                    
 
-                    //Image_ThresholdFilter(&copy, thresh);
+                    
                     Image_Free(&caseImage); 
                     Image_Free(&resized);
-                    //Image_Save(&origin, "FINAL");
-                    //ShapeTab_Free(tab);
+                    
+                    
                 }
             }
         }
         double angle = ShapeTab_ComputeAngle(verified) * 180 / M_PI;
-        //printf("COUNT = %d\n", count);
+        
         rotate(&origin, angle);
-        //Image_Save(&origin, "ROTATÉE");
+        
         Image_Free(&origin);
     }
 
     else{
-        //Error("No grid detected.");
+        
     }
 
     Image rese = Image_CreateFromSurface(surface, surface->w, surface->h);
@@ -770,15 +770,15 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         rect.y = 0;
 
 
-    //printf("X : %d, Y : %d, W : %d, H : %d\n", rect.x, rect.y, rect.w, rect.h);
-    //printf("width = %d, height = %d\n", rese.width, rese.height);
+    
+    
     Image t = Image_Crop(&rese, &rect);
     Image_Save(&t, "tmp/croped");
     Image_Free(&t);
     Image_DrawMatrix(&rese, matrice);
     ShapeTab_Free(verified);
     SDL_Surface* res =  Image_CreateSurface(&rese);
-    //Image_Save(&copy, "tmp/grid");
+    
     Image_Free(&copy);
 
     for (int i = 0; i < 16; i ++){

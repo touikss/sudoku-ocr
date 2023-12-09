@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "../headers/image_2.h"
-//#include "SDL2/SDL.h"
+
 #include <SDL2/SDL_image.h>
 #include "../headers/pixel_operations.h"
 
@@ -93,12 +93,12 @@ Image2 *pixbuf_to_image(GdkPixbuf *pixbuf)
 /*
 SDL_Surface *load_image(char *path)
 {
-    //printf("-->📁 Opening %s\n", path);
+    
 
     SDL_Surface *img;
 
-    // Load an image using SDL_image with format detection.
-    // If it fails, die with an error message.
+    
+    
     img = IMG_Load(path);
     if (!img)
         errx(3, "can't load %s: %s", path, IMG_GetError());

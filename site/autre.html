@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<link rel="stylesheet" type="text/css" href="image-police/police_proxymanalysis">
+	<title>Centauri</title>
+</head>
+<body>
+<nav class="menu_nav">
+        <form id="logoutForm" action="includes/logout.php" method="post">
+            <input type="hidden" name="logout" value="1">
+            <button id="deconnectButton" type="submit">
+                <img src="image-police/deconnect.png" alt="Deconnect">
+            </button>
+        </form>
+        <ul>
+            <li class="btn">
+                <a href="index.php">
+                    Home
+                </a>
+            </li>
+            <li class="btn">
+                <a href="guide_utilisation.php">
+                    User Guide
+                </a>
+            </li >
+            <li class="btn">
+                <a href="ProxymAnalysis_presentation.php">
+                    ProxymAnalysis
+                </a>
+            </li>
+            <li class="btn">
+                <a href="Centauri.php">
+                    Centauri
+                </a>
+            </li>
+            <li class="btn">
+                <a href="conditions_utilisation.php">
+                    Terms of Service
+                </a>
+            </li>
+        </ul>
+
+    </nav>
+    <div class="titre">
+        <ul>
+            <li>p</li>
+            <li>r</li>
+            <li>o</li>
+            <li>x</li>
+            <li>y</li>
+            <li>m</li>
+            <li>a</li>
+            <li>n</li>
+            <li>a</li>
+            <li>l</li>
+            <li>y</li>
+            <li>s</li>
+            <li>i</li>
+            <li>s</li>
+        </ul>
+    </div>
+    </div>
+    </div>
+    <div id="star-container">
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+	<div class="pres">
+		<p>The Centauri group is composed of 4 members: Louis who is the group leader, he is responsible for the treatment of XSS vulnerabilities and he is also in charge of the resolution report; Claudia is in charge of the treatment of SQL injection and CSRF vulnerabilities; Nathan is in charge of the management of FileInclusion vulnerabilities and of the accessibility to the service and finally Emile & Claudia who are in charge of the website and of the management of the accounts.</p>
+	</div>
+	<div id="star-container">
+  		<div class="star"></div>
+ 		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+ 		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+  		<div class="star"></div>
+	</div>
+	<script type="text/javascript">
+		const starContainer = document.getElementById("star-container");
+		const stars = document.getElementsByClassName("star");
+
+		for (let i = 0; i < stars.length; i++) {
+  			stars[i].style.top = `${Math.random() * 100}%`;
+  			stars[i].style.left = `${Math.random() * 100}%`;
+  			stars[i].style.animationDelay = `${Math.random() * 20}s`;
+  			stars[i].addEventListener("animationiteration", () => {
+    			stars[i].style.top = `${Math.random() * 100}%`;
+    			stars[i].style.left = `${Math.random() * 100}%`;
+  			});
+		}
+	</script>
+	
+<div id="stars"></div>
+
+<script>
+    function createStar() {
+        const star = document.createElement('div');
+        star.classList.add('stars');
+
+        const trail = document.createElement('div');
+        trail.classList.add('trail');
+
+        const size = Math.random() * 5 + 2;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        trail.style.width = size + 'px';
+        trail.style.height = size + 'px';
+
+        const angle = Math.random() * 360;
+        const speed = Math.random() * 2 + 1;
+        const trailDuration = Math.random() * 0.5 + 0.3;
+        const delay = Math.random() * 5;
+
+        star.style.left = Math.random() * window.innerWidth + 'px';
+        star.style.top = Math.random() * window.innerHeight + 'px';
+        star.style.animation = `shootingStar ${speed}s linear ${delay}s infinite`;
+        star.style.transform = `rotate(${angle}deg)`;
+        trail.style.animation = `fadeTrail ${trailDuration}s linear ${delay}s infinite`;
+
+        document.getElementById('stars').appendChild(star);
+        star.appendChild(trail);
+
+        setTimeout(() => {
+            star.remove();
+        }, (speed + delay) * 1000);
+    }
+
+    setInterval(createStar, 300);
+</script>
+</body>
+</html>
