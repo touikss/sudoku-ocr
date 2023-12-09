@@ -281,6 +281,60 @@ Image Image_Resize28(Image *original) {
     return resized;
 }
 
+void createAndWriteToFile(int hexa) {
+    // Nom du fichier
+    const char *fileName = "./tmp/hexa.txt";
+
+    // Ouvrir le fichier en mode écriture
+    FILE *file = fopen(fileName, "w");
+
+    // Vérifier si le fichier est ouvert avec succès
+    if (file != NULL) {
+        // Écrire "1" dans le fichier
+        if (hexa == 1)
+            fprintf(file, "1");
+        else
+            fprintf(file, "0");
+        // Fermer le fichier
+        fclose(file);
+
+        //printf("Fichier créé et écrit avec succès.\n");
+    } else {
+        // Gérer l'erreur si l'ouverture du fichier a échoué
+        //perror("Erreur lors de l'ouverture du fichier");
+    }
+}
+
+int verifieEtSupprime(const char *nomFichier) {
+    // Ouvre le fichier en mode lecture
+    FILE *fichier = fopen(nomFichier, "r");
+
+    // Vérifie si le fichier a été ouvert avec succès
+    if (fichier == NULL) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return -1;  // Code d'erreur
+    }
+
+    // Lit le premier caractère
+    int premierCaractere = fgetc(fichier);
+
+    // Ferme le fichier
+    fclose(fichier);
+
+    // Vérifie si le premier caractère est '1'
+    if (premierCaractere == '1') {
+        // Supprime le fichier
+        if (remove(nomFichier) != 0) {
+            perror("Erreur lors de la suppression du fichier");
+            return -1;  // Code d'erreur
+        }
+
+        return 1;  // Le premier caractère est '1', fichier supprimé
+    } else {
+        return 0;  // Le premier caractère n'est pas '1', fichier non supprimé
+    }
+}
+
 
 SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
 {    
@@ -445,6 +499,17 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         Image_DrawMatrix(&copy, matrice);
         detected = Matrix_Count(matrice) == 81 || Matrix_Count(matrice) == 256;
     }
+    int hexa = 0;
+    if (Matrix_Width(matrice) == 9){
+        createAndWriteToFile(0);
+        hexa = 0;
+    }
+    else{
+        createAndWriteToFile(1);
+        hexa = 1;
+    }
+
+    printf("HEXA = %d\n", hexa);
 
     if (detected){
         char* path = (char*)malloc(40); 
@@ -553,19 +618,48 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
     }
 
     else{
-        Error("No grid detected.");
+        //Error("No grid detected.");
     }
 
     Image rese = Image_CreateFromSurface(surface, surface->w, surface->h);
-    Image_DrawMatrix(&rese, matrice);
-    ShapeTab_Free(verified);
 
     printf("----- RESULT -----\n");
     printf("ITERAION = %d\n", iteration);
     printf("FOUND = %s\n", detected? "YES" : "NO");
 
+    SDL_Rect rect;
+    if (1 == 1){
+        rect.w = abs((int)matrice[0][8]->extremum[1] - (int)matrice[8][0]->extremum[0]);
+        rect.h = abs((int)matrice[8][8]->extremum[3] - (int)matrice[0][0]->extremum[2]);
+    }
+    else {
+        rect.w = abs((int)matrice[0][15]->extremum[1] - (int)matrice[15][0]->extremum[0]);
+        rect.h = abs((int)matrice[15][15]->extremum[3] - (int)matrice[0][0]->extremum[2]);
+    }
+
+    rect.w = (rect.w + 100);
+    rect.h = (rect.h + 100);
+    
+    Shape_ComputeDescriptors(matrice[0][0]);
+    Shape_ComputeDescriptors(matrice[0][8]);
+
+    rect.y = matrice[0][0]->extremum[2];
+    rect.x = matrice[8][0]->extremum[0];
+    rect.y = abs(rect.y - 50);
+    rect.x = abs(rect.x - 50);
+
+    if (rect.x + rect.w >= (int)rese.width)
+        rect.w = rese.width - rect.x - 5;
+    if (rect.y + rect.h >= (int)rese.height)
+        rect.h = rese.height - rect.y - 5;
+
+    Image t = Image_Crop(&rese, &rect);
+    Image_Save(&t, "tmp/croped");
+    Image_Free(&t);
+    Image_DrawMatrix(&rese, matrice);
+    ShapeTab_Free(verified);
     SDL_Surface* res =  Image_CreateSurface(&rese);
-    Image_Save(&copy, "tmp/grid");
+    //Image_Save(&copy, "tmp/grid");
     Image_Free(&copy);
 
 
@@ -576,6 +670,9 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                 Shape_Free(current);
         }
     }
+
+    if (!detected)
+        return NULL;
 
     return res;
 }

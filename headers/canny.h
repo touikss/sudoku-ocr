@@ -19,6 +19,8 @@ typedef struct {
     int strength;
 } Gradient;
 
+int verifieEtSupprime(const char *nomFichier);
+
 SDL_Surface* ConvertSurfaceToGrayScale(SDL_Surface *image);
 
 SDL_Surface* ConvertSurfaceToGaussianBlur(SDL_Surface *image, int smoothness);

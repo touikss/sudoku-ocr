@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.40.0 -->
+<!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
   <object class="GtkFileFilter" id="Image Filter">
@@ -385,6 +385,26 @@
                     <property name="can-focus">False</property>
                     <property name="orientation">vertical</property>
                     <child>
+                      <object class="GtkEventBox" id="cropeventbox2">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-left">20</property>
+                        <property name="margin-right">20</property>
+                        <property name="margin-start">20</property>
+                        <property name="margin-end">20</property>
+                        <property name="margin-top">20</property>
+                        <property name="margin-bottom">20</property>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
                       <object class="GtkEventBox" id="cropeventbox1">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
@@ -406,7 +426,7 @@
                       <packing>
                         <property name="expand">True</property>
                         <property name="fill">True</property>
-                        <property name="position">0</property>
+                        <property name="position">1</property>
                       </packing>
                     </child>
                     <child>
@@ -418,12 +438,12 @@
                         <property name="spacing">8</property>
                         <property name="layout-style">start</property>
                         <child>
-                          <object class="GtkButton" id="confirmcropbutton1">
+                          <object class="GtkButton" id="solve">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="receives-default">True</property>
                             <child>
-                              <object class="GtkLabel">
+                              <object class="GtkLabel" id="next">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">&lt;span weight="bold"&gt;Confirm&lt;/span&gt;</property>
@@ -442,7 +462,7 @@
                         <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="padding">8</property>
-                        <property name="position">1</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
                   </object>

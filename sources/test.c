@@ -6,7 +6,9 @@
 #include "../headers/image_manipulation.h"
 #include "../headers/rotations.h"
 #include "../headers/nn.h"
-
+#include <string.h>
+#include "../headers/solver_hexa.h"
+#include "../headers/solver.h"
 
 #define IMAGE_SIZE 500
 #define VERBOSE_MODE 0
@@ -24,6 +26,8 @@ SDL_Surface* globalImage;
 
 double rotateScale = 0;
 int hexa = 0;
+char* path;
+int mat[16][16];
 
 struct StepIndicators
 {
@@ -49,6 +53,7 @@ struct Controls
     GtkButton *confirm_crop_button;
     GtkButton *correction_done_button;
     GtkButton *done_digit_detection;
+    GtkButton *solve;
     GtkFileChooserButton *file_chooser_button;
     GtkEventBox *crop_event_box;
 };
@@ -268,7 +273,7 @@ void file_selected(GtkWidget *widget, gpointer data)
                 = GTK_FILE_CHOOSER(main_window->controls->file_chooser_button);
 
     GFile *file = gtk_file_chooser_get_file(file_chooser);
-    char *path = g_file_get_path(file);
+    path = g_file_get_path(file);
 
 
     // Loading image from path
@@ -345,10 +350,10 @@ void *grid_detection_handler(gpointer data)
     Image_Rotate(&temp, rotateScale);
 
     globalImage = Image_CreateSurface(&temp);
-    globalImage = ApplyCannyFilter(globalImage);
+    SDL_Surface* surface = ApplyCannyFilter(globalImage);
     Image_Free(&temp);
 
-    *main_window->images->current_image = SDL_Surface_to_Image2(globalImage);
+    *main_window->images->current_image = SDL_Surface_to_Image2(surface);
 
     g_idle_add(grid_detection_finished, main_window);
 
@@ -479,16 +484,58 @@ void window_destroy(GtkWidget *_, gpointer data)
     gtk_main_quit();
 }
 
-void ocr(gpointer data)
+void set_sudoku_values(GtkWidget *grid, int sudokuValues[16][16], int hexa) {
+    int x = 9;
+    int y = 9;
+    if (hexa == 1){
+        x = 16;
+        y = 16;
+    }
+    
+    for (int i = 0; i < x; i++) {
+        for (int j = 0; j < y; j++) {
+            // Obtenez le numéro actuel dans la grille
+            int value = sudokuValues[i][j];
+
+            // Obtenez le widget GtkEntry à la position (i, j)
+            GtkWidget *entry = gtk_grid_get_child_at(GTK_GRID(grid), j, i);
+
+
+            // Vérifiez si le widget existe et est de type GtkEntry
+            if (GTK_IS_ENTRY(entry)) {
+                // Convertissez la valeur en chaîne de caractères
+                gchar *text = g_strdup_printf("%x", value);
+
+                if (value == -1) {
+                        text = g_strdup(" ");
+                } else {
+                        text = g_strdup_printf("%X", value);
+                }
+                // Définissez le texte de l'entrée
+                gtk_entry_set_text(GTK_ENTRY(entry), text);
+
+                // Libérez la mémoire allouée pour la chaîne
+                g_free(text);
+            }
+        }
+    }
+}
+
+void ocr(GtkWidget *_, gpointer data)
 {
-    int mat[16][16];
+    MainWindow *main_window = (MainWindow *)data;
+
+    hexa = verifieEtSupprime("./tmp/hexa.txt");
+    printf("HEXA = %d\n", hexa);
+
+    
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
             mat[i][j] = -1;
         }
     }
 
-    perform_nn(0, mat);
+    perform_nn(!hexa, mat);
 
     for (int i = 0; i < 16; i ++){
         for (int j = 0; j < 16; j ++){
@@ -499,6 +546,164 @@ void ocr(gpointer data)
         }
         printf("\n");
     }
+
+    *main_window->images->current_image = SDL_Surface_to_Image2(IMG_Load("../../tmp/croped"));
+
+    set_step(main_window->step_indicators, 5);
+
+    set_page(main_window, "page5");
+
+    GList *child = gtk_container_get_children(GTK_VIEWPORT(main_window->pages->page5->container));
+
+        // Accéder au premier enfant
+    GtkWidget *box = GTK_WIDGET(child->data);
+
+    // Obtenez la liste des enfants du conteneur (box)
+    GList *children = gtk_container_get_children(GTK_CONTAINER(box));
+
+        // Vérifiez si la liste n'est pas vide
+    GtkWidget *cont = GTK_WIDGET(children->data);
+
+        // N'oubliez pas de libérer la liste des enfants
+    g_list_free(child);
+    g_list_free(children);
+
+    GtkWidget *grid = gtk_grid_new();
+     // Ajoutez la nouvelle grille à la fenêtre principale
+    gtk_container_add(GTK_CONTAINER(cont), grid);
+
+    create_sudoku_grid(grid, hexa);
+
+    set_sudoku_values(grid, mat, hexa);
+
+    gtk_widget_show_all(main_window->window);
+}
+
+void on_entry_changed(GtkWidget *entry, gpointer user_data) {
+    const gchar *text = gtk_entry_get_text(GTK_ENTRY(entry));
+    //g_print("Label de la case : %s\n", text);
+}
+
+void clear_grid(GtkWidget *grid) {
+    GList *children, *iter;
+    children = gtk_container_get_children(GTK_CONTAINER(grid));
+    for (iter = children; iter != NULL; iter = g_list_next(iter)) {
+        gtk_widget_destroy(GTK_WIDGET(iter->data));
+    }
+    g_list_free(children);
+}
+
+void create_sudoku_grid(GtkWidget *grid, int hexa) {
+    //clear_grid(grid);
+    
+    // Activer l'homogénéité pour que les lignes et les colonnes aient la même taille
+    gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+    gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+
+
+    int x = 9;
+    int y = 9;
+    if (hexa == 1){
+        x = 16;
+        y = 16;
+    }
+
+    //int max_dimension = MAX(x, y);
+    gint grid_width = gtk_widget_get_allocated_width(grid);
+    gint grid_height = gtk_widget_get_allocated_height(grid);
+    gint cell_size = MIN(grid_width / x, grid_height / y);
+
+
+    for (int i = 0; i < x; i++) {
+        //gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+            
+        for (int j = 0; j < y; j++) {
+            //gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+            
+            GtkWidget *entry = gtk_entry_new();
+            gtk_entry_set_width_chars(GTK_ENTRY(entry), 1);
+            gtk_entry_set_max_length(GTK_ENTRY(entry), 1);
+            //gtk_widget_set_hexpand(entry, TRUE);
+            //gtk_widget_set_vexpand(entry, TRUE);
+
+            // Définir une taille fixe pour chaque case
+            //gtk_widget_set_size_request(entry, 35, 35);
+
+           // Changer la taille de la police
+            PangoFontDescription *font_desc = pango_font_description_from_string("Arial 12"); // "Arial" est la police et 12 est la taille
+            gtk_widget_modify_font(entry, font_desc);
+            pango_font_description_free(font_desc);
+
+            gtk_entry_set_alignment(GTK_ENTRY(entry), 0.5);
+    
+            // Restreindre les entrées à des chiffres uniquement
+            //gtk_entry_set_input_restrictions(GTK_ENTRY(entry), GTK_INPUT_RESTRICT_NUMERIC);
+
+
+            // Calculer la position de chaque case
+            gint cell_x = i * cell_size;
+            gint cell_y = j * cell_size;
+
+            //int cell_width = gtk_widget_get_allocated_width(grid) / max_dimension;
+            //int cell_height = gtk_widget_get_allocated_height(grid) / max_dimension;
+
+             // Définir la taille de chaque case
+            gtk_widget_set_size_request(entry, cell_size, cell_size);
+
+            // Connecter la fonction de rappel pour le changement de texte
+            g_signal_connect(entry, "changed", G_CALLBACK(on_entry_changed), NULL);
+
+            gtk_grid_attach(GTK_GRID(grid), entry, j, i, 1, 1);
+        }
+    }
+}
+
+void sudoku(GtkWidget *_, gpointer data){
+    printf("SUDOKU\n");
+    for (int i = 0; i < 16; i ++){
+        for (int j = 0; j < 16; j ++){
+            if (mat[i][j] < 0){
+                printf("  |");
+                mat[i][j] = 0;
+            }
+            else
+                printf("%2d|", mat[i][j]);
+            
+        }
+        printf("\n");
+    }
+    int solved = 0;
+    if (hexa == 0){
+        int** sud = malloc(9 * sizeof(int*)); // Allocate memory for rows
+        for (int i = 0; i < 9; i++) {
+            sud[i] = malloc(9 * sizeof(int)); // Allocate memory for columns
+        }
+        for (int i = 0; i < 9; i ++){
+            for (int j = 0; j < 9; j ++){
+                sud[i][j] = mat[i][j];
+                if (sud[i][j] < 0)
+                    sud[i][j] = 0;
+            }
+        }
+        print_grid(sud);
+        solved = solve_sudoku(sud, 0, 0);
+        print_grid(sud);
+    }
+    else{
+        char** sud = malloc(16 * sizeof(char*)); // Allocate memory for rows
+        for (int i = 0; i < 16; i++) {
+            sud[i] = malloc(16 * sizeof(char)); // Allocate memory for columns
+        }
+        for (int i = 0; i < 16; i ++){
+            for (int j = 0; j < 16; j ++){
+                sud[i][j] = mat[i][j];
+                if (sud[i][j] < 0)
+                    sud[i][j] = 0;
+            }
+        }
+        solved = solveSudoku(mat);
+    }
+    printf("SOLVED : %d\n", solved);
 }
 
 int main(int argc, char *argv[]) {
@@ -534,7 +739,8 @@ int main(int argc, char *argv[]) {
     GtkButton *confirm_crop_button
             = GTK_BUTTON(gtk_builder_get_object(builder, "confirmcropbutton"));
     GtkButton *correction_done_button
-            = GTK_BUTTON(gtk_builder_get_object(builder, "correctiondonebutton"));
+            = GTK_BUTTON(gtk_builder_get_object(builder, "solve"));
+
     GtkEventBox *crop_event_box
             = GTK_EVENT_BOX(gtk_builder_get_object(builder, "cropeventbox"));
 
@@ -700,8 +906,6 @@ int main(int argc, char *argv[]) {
     };
 
 
-
-
     // Connect signals
     g_signal_connect(
             window, "destroy", G_CALLBACK(window_destroy), &main_window);
@@ -731,6 +935,7 @@ int main(int argc, char *argv[]) {
     g_signal_connect(rotation_right, "clicked",
                    G_CALLBACK(rotation_droite), &main_window);
 
+
     // Images Drawing Area
     g_signal_connect(
             page2_image, "draw", G_CALLBACK(draw_image), &main_window);
@@ -738,8 +943,14 @@ int main(int argc, char *argv[]) {
             page3_image, "draw", G_CALLBACK(draw_image), &main_window);
     g_signal_connect(
             page4_image, "draw", G_CALLBACK(draw_image), &main_window);
+    g_signal_connect(
+        page5_image, "draw", G_CALLBACK(draw_image), &main_window); 
+    g_signal_connect(
+        page6_image, "draw", G_CALLBACK(draw_image), &main_window);
 
 
+     g_signal_connect(G_OBJECT(correction_done_button), "clicked",
+        G_CALLBACK(sudoku), &main_window);        
 
     // Affichage de la fenêtre principale
     gtk_widget_show_all(GTK_WIDGET(window));

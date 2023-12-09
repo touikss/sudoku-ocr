@@ -70,20 +70,20 @@ void print_grid(int** grid) {
 
             // Print the value of the cell in the Sudoku grid.
             printf("%d", grid[i][j]);
-	    j += 1;
+        j += 1;
         }
 
         // Add a newline after every row. Additionally, add an extra newline after every third row
         // to separate the grid into 3x3 subgrids for better visualization.
-	count += 1;
+    count += 1;
         if (count == 3 && i < 8){
             printf("\n");
-	    count = 0;
-	}
+        count = 0;
+    }
 
         printf("\n");
-	i += 1;
-	j = 0;
+    i += 1;
+    j = 0;
     }
 }
 
@@ -121,7 +121,7 @@ int is_valid(int** grid, int row, int col, int num) {
                 res = 0; // Set the result to 0 if the number is found in the 3x3 subgrid.
             j++;
         }
-	j = 0;
+    j = 0;
         i++;
     }
 
@@ -135,6 +135,7 @@ int is_valid(int** grid, int row, int col, int num) {
 // It starts at the specified row and column and recursively fills in the grid's cells.
 // Returns 1 if a solution is found, 0 otherwise.
 int solve_sudoku(int** grid, int row, int col) {
+    print_grid(grid);
     // Base case: If we have reached the end of the grid (row 8, column 9), a solution is found.
     if (row == 8 && col == 9)
         return 1;
