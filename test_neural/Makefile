@@ -4,11 +4,11 @@ OBJ = ${C_SOURCES:.c=.o}
 CFLAGS = 
 
 MAIN = main
-CC = /usr/bin/gcc
-LINKER = /usr/bin/ld
+CC = gcc
+LINKER = ld
 
-run: ${MAIN}
-	./${MAIN}
+#run: ${MAIN}
+#X	./${MAIN}
 
 main: ${OBJ}
 	${CC} ${CFLAGS} $^ -o $@ -lm
