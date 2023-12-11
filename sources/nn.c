@@ -265,12 +265,12 @@ void perform_nn(int hexa, int res[][16]){
 	 if (hexa == 9)
 			printf(" ");
 	
-
+	/*
 		for (int i = 0; i < 16; i ++){
 			for (int j = 0; j < 16; j ++){
 				res[i][j] = rand()%20;
 				if (res[i][j] > 9 || res[i][j] == 0)
 					res[i][j] = -1;
 			}
-		}
+		}*/
 }
