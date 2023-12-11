@@ -7,8 +7,8 @@ MAIN = main
 CC = /usr/bin/gcc
 LINKER = /usr/bin/ld
 
-#run: ${MAIN}
-#	./${MAIN}
+run: ${MAIN}
+	./${MAIN}
 
 main: ${OBJ}
 	${CC} ${CFLAGS} $^ -o $@ -lm
