@@ -233,11 +233,7 @@ void perform_nn(int hexa, int res[][16]){
 				if (access(filename, F_OK) != -1) {
 								tab[count].x = i;
 								tab[count].y = j;
-								
-								
-    				
-        
-								
+								res[i][j] = rand()%9;
 								imgs[count] = bmp_to_img(filename);
 								count ++;
     }
