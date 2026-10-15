@@ -1,16 +1,13 @@
-# build artifacts (the directory itself is kept for the Makefile)
-objects/*
-!objects/.gitkeep
+# build artifacts (the directories are created by the Makefile)
+objects/
 *.o
 *.d
 /main
 /test_neural/main
 
-# generated at run time (directories are kept: the program writes into them)
-output/*
-!output/.gitkeep
-tmp/*
-!tmp/.gitkeep
+# generated at run time
+output/
+tmp/
 
 # editor and backup files
 *~

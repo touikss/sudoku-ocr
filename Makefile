@@ -28,11 +28,14 @@ all: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(EXECUTABLE) $(LIBS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | dirs
 	$(CC) $(CFLAGS) -c $< -o $@
+
+dirs:
+	mkdir -p $(OBJ_DIR) output tmp
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE)
 
-.PHONY: all clean
+.PHONY: all clean dirs
 
