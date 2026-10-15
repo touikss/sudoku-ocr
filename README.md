@@ -22,9 +22,6 @@ processing, the neural network and the solvers.
    hexadecimal letter. Empty cells are left blank.
 4. **Solve.** A backtracking solver fills the grid.
 
-The network is trained on digits drawn from about 200 fonts, on MNIST samples, and on real
-cells taken from the test photos.
-
 ## Build and run
 
 You need GTK 3, SDL2, SDL2_image and SDL2_ttf.
@@ -70,5 +67,5 @@ images_test/      test photos
 
 ## License
 
-MIT, see [LICENSE](LICENSE). MNIST, the fonts and the photos in `images_test/` keep their own
+MIT, see [LICENSE](LICENSE). MNIST, the font in `res/` and the photos in `images_test/` keep their own
 licences.
