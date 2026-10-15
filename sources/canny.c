@@ -96,7 +96,7 @@ void ApplyPreProcess(Image* image, int smooth, int type, int image_type)
     }
 }
 
-void GridDetection(Image* image, ShapeTab* shapes, int smooth, int type, int image_type)
+int GridDetection(Image* image, ShapeTab* shapes, int smooth, int type, int image_type)
 {
     if (image == NULL || shapes == NULL)
         Error("NULL parameter in GridDetection()");
@@ -112,13 +112,17 @@ void GridDetection(Image* image, ShapeTab* shapes, int smooth, int type, int ima
 
     ShapeTab_FoundGrid(shapes);
     
-    if (shapes->grid == NULL)
-        Error("Error while searching the grid in TabShape in GridDetection()");
+    if (shapes->grid == NULL){
+        free(path);
+        return 0;
+    }
 
     ShapeTab_KeepOnlyGrid(shapes);
 
-    if (shapes->size != 1)
-        errx(EXIT_FAILURE, "Trop de formes détectées. Ou pas assez...");
+    if (shapes->size != 1){
+        free(path);
+        return 0;
+    }
 
     Image_Clear(image);
     Image_DrawShape(image, shapes->grid, WHITE);
@@ -140,10 +144,15 @@ void GridDetection(Image* image, ShapeTab* shapes, int smooth, int type, int ima
     Image_DrawShapeTab(image, shapes);
 
     free(path);
+    return 1;
 }
 
 void Image_Rotate(Image *image, double angle) 
 {
+    /* a full turn (0 by default in the GUI) must not resample the image */
+    if (fabs(remainder(angle, 2 * M_PI)) < 1e-9)
+        return;
+
     int center_x = image->width / 2;
     int center_y = image->height / 2;
     int width = image->width;
@@ -389,10 +398,10 @@ SDL_Surface* draw_sudoku_grid(SDL_Surface* surface, int sudoku_grid[][16], int s
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             
-            if (sudoku_grid[i][j] != 0) {
+            if (sudoku_grid[i][j] >= 0) {
                 
-                char digit[2];
-                snprintf(digit, sizeof(digit), "%d", sudoku_grid[i][j]);
+                char digit[3];
+                snprintf(digit, sizeof(digit), "%X", sudoku_grid[i][j]);
 
                 
                 SDL_Color text_color = {255, 255, 255, 255};  
@@ -400,8 +409,8 @@ SDL_Surface* draw_sudoku_grid(SDL_Surface* surface, int sudoku_grid[][16], int s
 
                  
                 SDL_Rect text_position = {
-                    i * cell_size + (cell_size - text_surface->w) / 2,
-                    j * cell_size + (cell_size - text_surface->h) / 2,
+                    j * cell_size + (cell_size - text_surface->w) / 2,
+                    i * cell_size + (cell_size - text_surface->h) / 2,
                     0,
                     0};
                 
@@ -508,7 +517,13 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
             char* path = (char*)calloc(100, 8);
             snprintf(path, 100, "tmp/filter_%d_iteration_%d", filter, iteration);
 
-            GridDetection(&image, shapes, smooth, filter, GRID);
+            if (!GridDetection(&image, shapes, smooth, filter, GRID)){
+                Image_Free(&image);
+                ShapeTab_Free(shapes);
+                iteration ++;
+                smooth += 10;
+                continue;
+            }
 
             Image_Save(&image, path);
 
@@ -609,7 +624,7 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
         Image origin = Image_CreateFromSurface(surface, surface->w, surface->h);
         
         double a = 0;
-        int titled;
+        int titled = 0;
         for (int i = 0; i < 16; i ++){
             for (int j = 0; j < 16; j ++){
                 if (matrice[i][j] && matrice[i][j]->isTilted){
@@ -696,19 +711,26 @@ SDL_Surface* ApplyCannyFilter(SDL_Surface *surface)
                     
 
                     if (tab->size > 0){
-                        Shape* shape = tab->data->next;
+                        Shape* shape = ShapeTab_GetBiggestShape(tab);
+                        int minx = shape->extremum[0], maxx = shape->extremum[1];
+                        int miny = shape->extremum[2], maxy = shape->extremum[3];
+                        int s = max(maxx - minx, maxy - miny) + 6;
                         SDL_Rect rec;
-                        int s = max(shape->extremum[1] - shape->extremum[0], shape->extremum[3] - shape->extremum[2]) + 6;
+                        rec.x = (minx + maxx) / 2 - s / 2;
+                        rec.y = (miny + maxy) / 2 - s / 2;
                         rec.w = s;
                         rec.h = s;
-                        rec.x = shape->averageX - s /2;
-                        rec.y = shape->averageY - s /2;
-                        if (1 == 0){
-                        Image num = Image_Crop(&resized, &rec);
-                        Image fin = Image_Resize28(&num);
-                        Image_HighPassFilter(&fin, 1);
-                        Image_Save(&fin, path);}
-                        Image_Save(&resized, path);
+                        if (rec.x < 0) rec.x = 0;
+                        if (rec.y < 0) rec.y = 0;
+                        if (rec.x + rec.w > 28) rec.w = 28 - rec.x;
+                        if (rec.y + rec.h > 28) rec.h = 28 - rec.y;
+                        if (rec.w > 0 && rec.h > 0){
+                            Image num = Image_Crop(&resized, &rec);
+                            Image fin = Image_Resize28(&num);
+                            Image_Save(&fin, path);
+                        }
+                        else
+                            Image_Save(&resized, path);
                     }
                     
 

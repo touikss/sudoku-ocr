@@ -5,6 +5,23 @@
 
 #define MAXCHAR 100
 
+/* strtod() depends on the locale (GTK calls setlocale): with a French locale
+ * it stops at the '.' of "0.123456" */
+static double parse_double(const char* s) {
+	double sign = 1, val = 0, scale = 1;
+	if (*s == '-') { sign = -1; s++; }
+	while (*s >= '0' && *s <= '9')
+		val = val * 10 + (*s++ - '0');
+	if (*s == '.' || *s == ',') {
+		s++;
+		while (*s >= '0' && *s <= '9') {
+			scale /= 10;
+			val += (*s++ - '0') * scale;
+		}
+	}
+	return sign * val;
+}
+
 Matrix* matrix_create(int row, int col) {
 	Matrix *matrix = malloc(sizeof(Matrix));
 	matrix->rows = row;
@@ -77,7 +94,7 @@ Matrix* matrix_load(char* file_string) {
 	for (int i = 0; i < m->rows; i++) {
 		for (int j = 0; j < m->cols; j++) {
 			fgets(entry, MAXCHAR, file);
-			m->entries[i][j] = strtod(entry, NULL);
+			m->entries[i][j] = parse_double(entry);
 		}
 	}
 	printf("Sucessfully loaded matrix from %s\n", file_string);

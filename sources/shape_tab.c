@@ -30,6 +30,7 @@ ShapeTab* ShapeTab_Create(int capacity)
     shapeTab->stdH = 0;
     shapeTab->tiltedShapes = 0;
     shapeTab->squareShapes = 0;
+    shapeTab->grid = NULL;
     return shapeTab;
 }
 

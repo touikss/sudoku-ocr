@@ -233,7 +233,6 @@ void perform_nn(int hexa, int res[][16]){
 				if (access(filename, F_OK) != -1) {
 								tab[count].x = i;
 								tab[count].y = j;
-								res[i][j] = rand()%9;
 								imgs[count] = bmp_to_img(filename);
 								count ++;
     }
@@ -245,8 +244,16 @@ void perform_nn(int hexa, int res[][16]){
 							break;
 					
 					Matrix* prediction = network_predict_img(net, imgs[j]);
-					int pred = matrix_argmax(prediction);
-					pred = rand() % 10;
+					/* 9x9: digits 1..9, hexa: 0..F */
+					int first = hexa ? 0 : 1;
+					int last = hexa ? 16 : 10;
+					if (last > prediction->rows)
+						last = prediction->rows;
+					int pred = first;
+					for (int d = first + 1; d < last; d ++)
+						if (prediction->entries[d][0] > prediction->entries[pred][0])
+							pred = d;
+					matrix_free(prediction);
 					
 					res[tab[j].x][tab[j].y] = pred;
 			}

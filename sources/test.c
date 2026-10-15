@@ -878,6 +878,9 @@ void sudoku(GtkWidget *_, gpointer data){
 
     strcat(buffer, "SudokuSolver");
     int solved = 0;
+    for (int i = 0; i < 16; i ++)
+        for (int j = 0; j < 16; j ++)
+            display[i][j] = -1;
     if (hexa == 0){
         int** sud = createSudokuFromHexa(mat);
         if(gridIsValid(sud)) {
@@ -904,8 +907,10 @@ void sudoku(GtkWidget *_, gpointer data){
             for (int i = 0; i < 16; i ++){
                 for (size_t j = 0; j < 16; j++)
                 {
-                    if (sud[i][j] > '9')
-                        display[i][j] = sud[i][j] - 'A';
+                    if (sud[i][j] == 'X')
+                        display[i][j] = -1;
+                    else if (sud[i][j] > '9')
+                        display[i][j] = sud[i][j] - 'A' + 10;
                     else
                         display[i][j] = sud[i][j] - '0';
                 }

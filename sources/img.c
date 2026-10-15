@@ -33,7 +33,7 @@ Img* bmp_to_img(char* file_string){
 	res->img_data = matrix_create(28, 28);
 	for (int i = 0; i < 28; i ++){
 		for (int j = 0; j < 28; j ++){
-			res->img_data->entries[i][j] = (double)image.pixels[i][j].r / 256.0;
+			res->img_data->entries[i][j] = (double)image.pixels[j][i].r / 256.0;
 		}
 	}
 	
